@@ -33,7 +33,24 @@ function fillUrn() {
 }
 
 function marble(container, color, size, locX, locY){
-    d3.select(container).append("circle").attr("cx",locX).attr("cy",locY).attr("r",size).attr("stroke-width",2).attr("stroke","black").style("fill",color);
+    d3.select(container)
+      .append("circle")
+      .attr("cx",locX)
+      .attr("cy",locY)
+      .attr("r",size)
+      .attr("stroke-width",2)
+      .attr("stroke","black")
+      .style("fill",color)
+      .on("click", function(event) {
+        currentColor = d3.select(this).style("fill")
+        newColor = "";
+        if (currentColor === "red") {
+          newColor = "blue";
+        } else {
+          newColor = "red";
+        }
+        d3.select(this).style("fill", newColor);
+      });
 }
 
 function occluder(container, xwidth, yheight, occLeft, occRight, occTop, occBottom, opac){
@@ -49,7 +66,7 @@ function report(){
 
     function senderWait() {
         flickerWait();
-        
+
         trial.waitTime = 1000 + 3000*exponential(0.75);
         setTimeout(function(){
             clearInterval(trial.timer);
@@ -89,7 +106,7 @@ function computerDraw(){
                 trial.reportedDrawn = lie;
             }
         }
-    }    
+    }
 }
 
 function callout(call){
@@ -133,7 +150,7 @@ function restartTrial(){
     trial.drawnBlue = 0;
     fillUrn();
     trial.compUnifLie = false;
-    
+
     $('#subjResponse').css('opacity','0');
     $('.callout-button').css('opacity','0.8');
     $('.callout-button').prop('disabled', false);
@@ -194,7 +211,7 @@ function submitCatchText(){
     setTimeout(function(){
         if(trial.exptPart == 'practice' | (trial.trialNumber + 1) % 5 == 0){
             $('.scoreboardDiv').css('opacity','1');
-        } 
+        }
         $('.scoreReport').css('opacity','1');
         $('#nextScoreboard').css('opacity','1');
     }, timeoutTime);
@@ -216,7 +233,7 @@ function submitCatchSlider(){
     setTimeout(function(){
         if(trial.exptPart == 'practice' | (trial.trialNumber + 1) % 5 == 0){
             $('.scoreboardDiv').css('opacity','1');
-        } 
+        }
         $('.scoreReport').css('opacity','1');
         $('#nextScoreboard').css('opacity','1');
     }, timeoutTime);
@@ -260,7 +277,7 @@ function catchTrial(role, exptPart){
 
             $('#slider').removeClass('inactiveSlider');
             $('#slider').addClass('activeSlider');
-            $('.activeSlider').css('background',dynamColor); 
+            $('.activeSlider').css('background',dynamColor);
             $('#catch-button').prop('disabled',false);
         });
 
@@ -288,7 +305,7 @@ function catchTrial(role, exptPart){
         });
     }
 
-    $('#catch-button').prop('disabled',true);  
+    $('#catch-button').prop('disabled',true);
     $('.scoreReport').css('opacity','0');
     $('.scoreboardDiv').css('opacity','0');
     $('#nextScoreboard').css('opacity','0');
@@ -452,12 +469,3 @@ function distributePseudo(totalTrials, minArrPseudo, maxArrPseudo){
     }
     return(pseudoDict);
 }
-
-
-
-
-
-
-
-
-
