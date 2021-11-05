@@ -28,11 +28,13 @@ function fillUrn() {
 
         let rowNum = Math.floor(i / marblesAcross);
         let colNum =  (i % marblesAcross)
-        marble("#urnsvg", marbleArray.shift(), 17.5, locX, locY);
+        let color = marbleArray.shift();
+        marble("#urnsvg", color, 17.5, locX, locY, i);
+        trial.marbles.drawnArray.push(color);
     }
 }
 
-function marble(container, color, size, locX, locY){
+function marble(container, color, size, locX, locY, idx){
     d3.select(container)
       .append("circle")
       .attr("cx",locX)
@@ -50,6 +52,7 @@ function marble(container, color, size, locX, locY){
           newColor = "red";
         }
         d3.select(this).style("fill", newColor);
+        trial.marbles.drawnArray[idx] = newColor;
       });
 }
 
