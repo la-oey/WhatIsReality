@@ -9,6 +9,8 @@ function fillUrn() {
     let urnRed = trial.marbles.drawn.red;
     trial.marbles.drawn.blue = expt.marblesSampled - urnRed;
     let urnBlue = trial.marbles.drawn.blue;
+    trial.marbles.reported.red = trial.marbles.drawn.red;
+    trial.marbles.reported.blue = trial.marbles.drawn.blue;
 
     let minUrnWidth = .05*$('#urn').width();
     let maxUrnWidth = .95*$('#urn').width();
@@ -29,12 +31,13 @@ function fillUrn() {
         let rowNum = Math.floor(i / marblesAcross);
         let colNum =  (i % marblesAcross)
         let color = marbleArray.shift();
-        marble("#urnsvg", color, 17.5, locX, locY, i);
-        trial.marbles.drawnArray.push(color);
+        marble("#urnsvg", color, 17.5, locX, locY, i, true);
+        trial.marbles.drawn.array.push(color);
+        trial.marbles.reported.array.push(color);
     }
 }
 
-function marble(container, color, size, locX, locY, idx){
+function marble(container, color, size, locX, locY, idx, clickable){
     d3.select(container)
       .append("circle")
       .attr("cx",locX)
@@ -44,15 +47,20 @@ function marble(container, color, size, locX, locY, idx){
       .attr("stroke","black")
       .style("fill",color)
       .on("click", function(event) {
+        if (!clickable) return;
         currentColor = d3.select(this).style("fill")
         newColor = "";
         if (currentColor === "red") {
           newColor = "blue";
+          trial.marbles.reported.red -= 1;
+          trial.marbles.reported.blue += 1;
         } else {
           newColor = "red";
+          trial.marbles.reported.red += 1;
+          trial.marbles.reported.blue -= 1;
         }
         d3.select(this).style("fill", newColor);
-        trial.marbles.drawnArray[idx] = newColor;
+        trial.marbles.reported.array[idx] = newColor;
       });
 }
 

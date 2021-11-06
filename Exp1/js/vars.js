@@ -23,14 +23,15 @@ var trial = {
         response: 0
     },
     marbles: {
-        drawnArray: [],
         drawn: { // N/A for receiver
             red: 0,
-            blue: 0
+            blue: 0,
+            array: []
         },
         reported: {
             red: 0,
-            blue: 0
+            blue: 0,
+            array: []
         }
     },
     catch: {
