@@ -64,13 +64,6 @@ function marble(container, color, size, locX, locY, idx, clickable){
       });
 }
 
-function occluder(container, xwidth, yheight, occLeft, occRight, occTop, occBottom, opac){
-    d3.select(container).append("rect").attr("x",0).attr("y",0).attr("width",xwidth).attr("height",occTop+0.1).style("fill","black").style("opacity",opac);
-    d3.select(container).append("rect").attr("x",0).attr("y",occTop).attr("width",occLeft).attr("height",occBottom-occTop).style("fill","black").style("opacity",opac);
-    d3.select(container).append("rect").attr("x",occRight).attr("y",occTop).attr("width",xwidth-occRight).attr("height",occBottom-occTop).style("fill","black").style("opacity",opac);
-    d3.select(container).append("rect").attr("x",0).attr("y",occBottom-0.1).attr("width",xwidth).attr("height",yheight-occBottom+0.1).style("fill","black").style("opacity",opac);
-}
-
 function report(){
     trial.responseTime = Date.now() - trial.responseStartTime;
     $('#report-button').prop('disabled', true);
@@ -169,7 +162,6 @@ function restartTrial(){
     trial.marblesDrawn = [];
     $('input[type=text]').val("");
     $('#reportMarbles').prop('disabled',true);
-    $('#next').prop('disabled',true);
 
     if(trial.exptPart != 'practice'){
         trial.pseudoRound = trial.trialNumber in expt.pseudo;

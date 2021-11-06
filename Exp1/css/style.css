@@ -243,14 +243,20 @@ body {
 #urn {
     float: left;
     border: 2px solid black;
-    margin-left: 15%;
-    width: 60%;
+    margin-left: 10%;
+    width: 63%;
     height: 450px;
 }
 
 #urnsvg {
     height: 100%;
     width: 100%;
+}
+
+#jar {
+    width: 13%;
+    margin-left: 3%;
+    margin-right: 10%;
 }
 
 #tube {

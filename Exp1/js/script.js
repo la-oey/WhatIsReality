@@ -49,18 +49,19 @@ function clickPostPractice(){
 function sender() {
     restartTrial();
 
-    var marbleInstruct = "<p class='instructText'>Click the 'Draw Marble' button to sample marbles from the box. Draw <b>10</b> marbles.</p>";
+    var marbleInstruct = "<p class='instructText'>You drew 100 marbles. Click on marbles to switch their color.</p>";
 
     $('#trialInstruct').html(marbleInstruct);
-    var responseText = "<p><br>Each <b style='color:red'>red</b> you report is 1 point for you; each <b style='color:blue'>blue</b> is 1 point for your opponent.</p>";
-    responseText += "<label><br>Say how many <b style='color:red'>red</b> marbles you want your opponent to think you drew:</label>";
-    responseText += "<input type='text' id='reportMarbles' value='' size='2' maxlength='2' autocomplete='off' autocorrect='off' autocapitalize='off' spellcheck='false'/> ";
-    responseText += "<button class='active-button' id='report-button' type='button' onclick='report();'>Report!</button><br><br>";
+    var responseText = "<p><br>Each <b style='color:red'>red</b> you report is 1 point for you; each <b style='color:blue'>blue</b> is 1 point for your opponent.<br>";
+    responseText += "You have <b id='redRep'></b> <b style='color:red'>red</b> marbles ";
+    responseText += "and your opponent has <b id='blueRep'></b> <b style='color:blue'>blue</b> marbles.";
+    $('#redRep').html(trial.marbles.drawn.red);
+    $('#blueRep').html(trial.marbles.drawn.blue);
     $('#subjResponse').html(responseText);
+    $('#next').html("Report!");``
+    $('#subjResponse').css('opacity',1);
     $('#urnsvg').css('background-color','white');
     $('#tubesvg').css('background-color','white');
-    $('#draw-button').prop('disabled',false);
-    $('#report-button').prop('disabled',true);
     $('input[type=text]').on('input',
         function(){
             trial.reportedDrawn = parseInt($(this).val());
@@ -81,7 +82,7 @@ function receiver() {
     $('#trialInstruct').html("");
     $('#tubesvg').css('background-color','purple');
     $('#draw-button').prop('disabled',true);
-
+report-bi
     function bullshitDetectWait() {
         flickerWait();
         
