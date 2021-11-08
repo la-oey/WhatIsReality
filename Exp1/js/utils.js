@@ -61,6 +61,8 @@ function marble(container, color, size, locX, locY, idx, clickable){
         }
         d3.select(this).style("fill", newColor);
         trial.marbles.reported.array[idx] = newColor;
+        $('#redRep').html(trial.marbles.reported.red);
+        $('#blueRep').html(trial.marbles.reported.blue);
       });
 }
 

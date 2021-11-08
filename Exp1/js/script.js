@@ -52,25 +52,19 @@ function sender() {
     var marbleInstruct = "<p class='instructText'>You drew 100 marbles. Click on marbles to switch their color.</p>";
 
     $('#trialInstruct').html(marbleInstruct);
-    var responseText = "<p><br>Each <b style='color:red'>red</b> you report is 1 point for you; each <b style='color:blue'>blue</b> is 1 point for your opponent.<br>";
+    var responseText = "<p class='instructText'><br>Each <b style='color:red'>red</b> you report is 1 point for you; each <b style='color:blue'>blue</b> is 1 point for your opponent.<br>";
     responseText += "You have <b id='redRep'></b> <b style='color:red'>red</b> marbles ";
     responseText += "and your opponent has <b id='blueRep'></b> <b style='color:blue'>blue</b> marbles.";
-    $('#redRep').html(trial.marbles.drawn.red);
-    $('#blueRep').html(trial.marbles.drawn.blue);
-    $('#subjResponse').html(responseText);
+    
+    $('#sendResponse').html(responseText);
+    trial.marbles.report = trial.marbles.drawn;
+    $('#redRep').html(trial.marbles.reported.red);
+    $('#blueRep').html(trial.marbles.reported.blue);
     $('#next').html("Report!");``
-    $('#subjResponse').css('opacity',1);
+    $('#sendResponse').css('opacity',1);
     $('#urnsvg').css('background-color','white');
     $('#tubesvg').css('background-color','white');
-    $('input[type=text]').on('input',
-        function(){
-            trial.reportedDrawn = parseInt($(this).val());
-            if(trial.reportedDrawn >= 0 && trial.reportedDrawn <= 10 ){
-                $('#report-button').prop('disabled',false);
-            } else{
-                $('#report-button').prop('disabled',true);
-            }
-    });
+    
     
 }
 
@@ -82,7 +76,6 @@ function receiver() {
     $('#trialInstruct').html("");
     $('#tubesvg').css('background-color','purple');
     $('#draw-button').prop('disabled',true);
-report-bi
     function bullshitDetectWait() {
         flickerWait();
         
@@ -94,8 +87,8 @@ report-bi
             responseInstruct += "<p>Your opponent will win <b id='oppPoints'></b> points and you will win <b id='yourPoints'/> points this round.<br><br></p>";
             responseInstruct += "<p id='responseAccRej'>Click <b style='color:green'>'Accept'</b> if you think your opponent is <b style='color:green'>telling the truth</b>, or <b style='color:red'>'Reject'</b> if you think your opponent is <b style='color:red'>lying</b>.</p>"
             
-            $('#subjResponse').html(responseInstruct);
-            $('#subjResponse').css('opacity','1');
+            $('#sendResponse').html(responseInstruct);
+            $('#sendResponse').css('opacity','1');
             if(trial.exptPart == "trial"){
                 $('#responseAccRej').css('opacity','0');
                 setTimeout(function(){
@@ -107,6 +100,16 @@ report-bi
             $('#reportMarbles').html(trial.reportedDrawn);
             $('#oppPoints').html(trial.reportedDrawn);
             $('#yourPoints').html(expt.marblesSampled - trial.reportedDrawn);
+
+            $('input[type=text]').on('input',
+                function(){
+                    trial.reportedDrawn = parseInt($(this).val());
+                    if(trial.reportedDrawn >= 0 && trial.reportedDrawn <= 10){
+                        $('#report-button').prop('disabled',false);
+                    } else{
+                        $('#report-button').prop('disabled',true);
+                    }
+            });
             
             $('#buttonResponse').css('opacity','1');
             trial.responseStartTime = Date.now();
