@@ -289,35 +289,22 @@ body {
     font-size: 14px;
 }
 
-#reportMarbles {
+#reportTruth {
     border: 3px solid red;
 }
 
-#reportMarbles:focus {
+#reportTruth:focus {
     border: 2px solid lightblue;
 }
 
-#buttonResponse {
+#receiveResponse {
     position: relative;
-    float: right;
+    float: left;
     padding-top: 2px;
     padding-bottom: 5px;
-    width: 80%;
-    margin-left: 10%;
-    margin-right: 10%;
-}
-
-.callout-button {
-    opacity: 0.8;
-    color: black;
-}
-
-#accept-button {
-    background-color: green;
-}
-
-#reject-button {
-    background-color: red;
+    width: 100%;
+    margin-left: 0%;
+    margin-right: 0%;
 }
 
 #catchQ {

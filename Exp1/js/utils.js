@@ -115,18 +115,10 @@ function computerDraw(){
     }
 }
 
-function callout(call){
+function inferTruth(){
     trial.responseTime = Date.now() - trial.responseStartTime;
-    $('.callout-button').prop('disabled', true);
-    if(call == 'accept'){
-        $('#accept-button').css('opacity','1');
-        $('#reject-button').css('opacity','0.5');
-        trial.callBS = false;
-    } else{
-        $('#reject-button').css('opacity','1');
-        $('#accept-button').css('opacity','0.5');
-        trial.callBS = true;
-    }
+    // $('.callout-button').prop('disabled', true);
+
     $('#next').prop('disabled',false);
 }
 
@@ -157,13 +149,10 @@ function restartTrial(){
     fillUrn();
     trial.compUnifLie = false;
 
-    $('#subjResponse').css('opacity','0');
-    $('.callout-button').css('opacity','0.8');
-    $('.callout-button').prop('disabled', false);
-    $('#buttonResponse').css('opacity','0');
+    $('#subjResponse').css('opacity',0);
+    //$('#receiveResponse').css('display','none');
     trial.marblesDrawn = [];
     $('input[type=text]').val("");
-    $('#reportMarbles').prop('disabled',true);
 
     if(trial.exptPart != 'practice'){
         trial.pseudoRound = trial.trialNumber in expt.pseudo;
@@ -186,7 +175,7 @@ function flickerWait(){
     var op = 0.1;
     var increment = 0.1;
     $('#subjResponse').html('<p><br><br><br>Waiting for your opponent...<br><br><br></p>');
-    $('#subjResponse').css('opacity','0');
+    $('#subjResponse').css('opacity',0);
     trial.timer = setInterval(go, 50)
     function go(){
         op += increment;
@@ -204,7 +193,7 @@ function flickerWait(){
 function submitCatchText(){
     trial.catch.responseTime = Date.now() - trial.catch.responseStartTime;
     $('input[type=text]').prop('disabled',true);
-    $('input[type=text]').css('opacity','0.7');
+    $('input[type=text]').css('opacity',0.7);
     $('#catch-button').prop('disabled', true);
     var timeoutTime = 0;
     if(trial.catch.key == trial.catch.response){
