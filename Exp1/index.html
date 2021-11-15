@@ -105,45 +105,22 @@ TODO:
     </div>
 
     <br>
-    <div id="sendResponse">
+    <div id="sendResponse" class="trialText">
         <p class='instructText'>
             <br>Each <b style='color:red'>red</b> you report is 1 point for you; each <b style='color:blue'>blue</b> is 1 point for your opponent.<br>
             You have <b id='redRep'></b> <b style='color:red'>red</b> marbles and 
             your opponent has <b id='blueRep'></b> <b style='color:blue'>blue</b> marbles.
         </p>
     </div>
-    <div id="receiveResponse">
+    <div id="receiveResponse" class="trialText">
         <p>Your opponent said they drew <b id='reportedMarbles'></b> red marbles.<br><br>
         <label>Say how many <b style="color:red">red</b> marbles you think your opponent drew.</label>
-        <input type='text' id='reportTruth' value='' size='2' maxlength='2' autocomplete='off' autocorrect='off' autocapitalize='off' spellcheck='false'/></p>
+        <input type='text' id='reportTruth' value='' size='3' maxlength='3' autocomplete='off' autocorrect='off' autocapitalize='off' spellcheck='false'/></p>
     </div>
+    <center><div id="waiting" class="trialText"></div></center>
     <br><br>
     <button class="big-button active-button" id="next" type="button" onclick="toScoreboard();">Next!</button>
 </div>
-
-<!-- <div id="trial" class="screen">
-    <p class="mtitle trialNum">Round</p>
-    <div id="trialInstruct"></div><br>
-    <div id="wrapper">
-        <div id="urn">
-            <svg id="urnsvg"></svg>
-        </div>
-        <div id="tube">
-            <svg id="tubesvg"></svg>
-            <button class="active-button" id="draw-button" type="button" onclick="draw();">Draw Marble</button>
-        </div>
-    </div>
-
-    <center><br><br>
-        <div id="subjResponse"></div>
-        <div id="buttonResponse">
-        	<button class="callout-button" id="accept-button" type="button" onclick="callout('accept');"><b>Accept</b></button>
-        	<button class="callout-button" id="reject-button" type="button" onclick="callout('reject');"><b>Reject</b></button>
-        </div>
-    </center>
-    <br><br><br>
-    <button class="big-button active-button" id="next" type="button" onclick="toScoreboard();">Next!</button>
-</div> -->
 
 <div id="scoreboard" class="screen">
 	<p class="mtitle trialNum">Round</p><br>

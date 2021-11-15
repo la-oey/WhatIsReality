@@ -48,65 +48,55 @@ function clickPostPractice(){
 
 function sender() {
     restartTrial();
+    fillUrn();
 
     var marbleInstruct = "<p class='instructText'>You drew 100 marbles. Click on marbles to switch their color.</p>";
-
     $('#trialInstruct').html(marbleInstruct);
     
-    trial.marbles.report = trial.marbles.drawn;
+    trial.marbles.reported = trial.marbles.drawn;
     $('#redRep').html(trial.marbles.reported.red);
     $('#blueRep').html(trial.marbles.reported.blue);
-    $('#next').html("Report!");``
-    $('#urnsvg').css('background-color','white');
-    $('#tubesvg').css('background-color','white');
-    
-    
+    $('#sendResponse').css('display','block');
+    $('#next').html("Report!");
 }
 
 
 
 function receiver() {
     restartTrial();
+    $('#next').prop('disabled',true);
 
     $('#trialInstruct').html("");
-    $('#tubesvg').css('background-color','purple');
-    $('#draw-button').prop('disabled',true);
+    $('#receiveResponse').css({'display':'block', 'opacity':0});
     function bullshitDetectWait() {
         flickerWait();
         
-        trial.waitTime = 3000 + 6000*exponential(0.75);
+        trial.time.wait = 3000 + 6000*exponential(0.75);
         setTimeout(function(){
             clearInterval(trial.timer);
+            $('#waiting').css('opacity',0);
+            fillUrn(true);
+            $('#reportedMarbles').html(trial.marbles.reported.red);
 
-            var responseInstruct = "<p>Your opponent said they drew <b id='reportMarbles'/> red marbles.</p>"
-            responseInstruct += "<p>Your opponent will win <b id='oppPoints'></b> points and you will win <b id='yourPoints'/> points this round.<br><br></p>";
-            responseInstruct += "<p id='responseAccRej'>Click <b style='color:green'>'Accept'</b> if you think your opponent is <b style='color:green'>telling the truth</b>, or <b style='color:red'>'Reject'</b> if you think your opponent is <b style='color:red'>lying</b>.</p>"
-            
-            $('#sendResponse').html(responseInstruct);
-            $('#sendResponse').css('opacity','1');
             if(trial.exptPart == "trial"){
-                $('#responseAccRej').css('opacity','0');
+                $('#responseAccRej').css('opacity', 0);
                 setTimeout(function(){
-                    $('#responseAccRej').css('opacity','1');
+                    $('#responseAccRej').css('opacity', 1);
                 }, 5000);    
             }
             
-            computerDraw();
-            $('#reportMarbles').html(trial.reportedDrawn);
-            $('#oppPoints').html(trial.reportedDrawn);
-            $('#yourPoints').html(expt.marblesSampled - trial.reportedDrawn);
-
             $('input[type=text]').on('input',
                 function(){
-                    trial.reportedDrawn = parseInt($(this).val());
-                    if(trial.reportedDrawn >= 0 && trial.reportedDrawn <= 10){
-                        $('#report-button').prop('disabled',false);
+                    trial.marbles.inferred.red = parseInt($(this).val());
+                    trial.marbles.inferred.blue = expt.marblesSampled - trial.marbles.inferred.red;
+                    if(trial.marbles.drawn.red >= 0 && trial.marbles.drawn.red <= 100){
+                        $('#next').prop('disabled',false);
                     } else{
-                        $('#report-button').prop('disabled',true);
+                        $('#next').prop('disabled',true);
                     }
             });
+            $('#receiveResponse').css('opacity',1);
             
-            $('#receiveResponse').css('display','block');
             trial.responseStartTime = Date.now();
         }, trial.waitTime);
     }
@@ -242,11 +232,11 @@ function trialDone() {
 
         $('#completed').css('display','block');
     } else {
-        if(trial.roleCurrent == 'sender'){
-            trial.roleCurrent = 'receiver';
+        if(trial.role == 'sender'){
+            trial.role = 'receiver';
             receiver();
         } else{
-            trial.roleCurrent = 'sender';
+            trial.role = 'sender';
             sender();
         }
     }

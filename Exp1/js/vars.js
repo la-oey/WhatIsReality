@@ -5,8 +5,12 @@ var expt = {
     practiceTrials: 2, //how many practice trials //switch to 4
     marblesSampled: 100, //total number of marbles drawn per trial
     probRed: 0.5,
-    roleFirst: 'sender', //roles: {'sender','receiver'}
+    roleFirst: 'receiver', //roles: {'sender','receiver'}
     catchTrials: [],
+    stat: {
+        playerTotalScore: 0,
+        oppTotalScore: 0
+    }
     // sona: {
     //     experiment_id: 1505,
     //     credit_token: ''
@@ -20,7 +24,8 @@ var trial = {
     time: {
         start: 0,
         trial: 0,
-        response: 0
+        response: 0,
+        wait: 0
     },
     marbles: {
         drawn: { // N/A for receiver
@@ -32,6 +37,10 @@ var trial = {
             red: 0,
             blue: 0,
             array: []
+        },
+        inferred: {
+            red: 0,
+            blue: 0
         }
     },
     catch: {
