@@ -48,18 +48,32 @@ function clickPostPractice(){
 
 function sender() {
     restartTrial();
-    fillUrn();
-
-    var marbleInstruct = "<p class='instructText'>You drew 100 marbles. Click on marbles to switch their color.</p>";
-    $('#trialInstruct').html(marbleInstruct);
-    
-    trial.marbles.reported = trial.marbles.drawn;
-    $('#redRep').html(trial.marbles.reported.red);
-    $('#blueRep').html(trial.marbles.reported.blue);
-    $('#sendResponse').css('display','block');
+    $('#trialInstruct').html("<p class='instructText'><br></p>");
     $('#next').html("Report!");
+    $('#next').prop('disabled',true);
     $('#next').unbind("click");
     $('#next').bind("click", report);
+
+    function drawingWait(){ //LO: Check why this isn't working
+        flickerWait("draw");
+
+        // trial.time.wait = 1000 + 3000*exponential(0.75);
+        setTimeout(function(){
+            clearInterval(trial.timer);
+
+            $('#waiting').css('opacity',0);
+            fillUrn();
+            var marbleInstruct = "<p class='instructText'>You drew 100 marbles. Click on marbles to switch their color.</p>";
+            $('#trialInstruct').html(marbleInstruct);
+            trial.marbles.reported = trial.marbles.drawn;
+            $('#redRep').html(trial.marbles.reported.red);
+            $('#blueRep').html(trial.marbles.reported.blue);
+            $('#sendResponse').css('display','block');
+            $('#next').prop('disabled',false);
+            trial.responseStartTime = Date.now();
+        })
+    }
+    drawingWait();
 }
 
 
@@ -68,26 +82,17 @@ function receiver() {
     restartTrial();
     $('#next').prop('disabled',true);
 
-    $('#trialInstruct').html("");
+    $('#trialInstruct').html("<p class='instructText'><br></p>");
     $('#receiveResponse').css({'display':'block', 'opacity':0});
-    // $('#waiting').html("<p>Your opponent made a decision.</p>")
     function receiverWait() {
-        flickerWait();
-        
-        // trial.time.wait = 3000 + 6000*exponential(0.75);
-        trial.time.wait = 1000 + 3000*exponential(0.75);
+        flickerWait("opp");
+
+        trial.time.wait = 3000 + 6000*exponential(0.75);
         setTimeout(function(){
             clearInterval(trial.timer);
             $('#waiting').css('opacity',0);
             fillUrn(true);
             $('#reportedMarbles').html(trial.marbles.reported.red);
-
-            if(trial.exptPart == "trial"){
-                $('#responseAccRej').css('opacity', 0);
-                setTimeout(function(){
-                    $('#responseAccRej').css('opacity', 1);
-                }, 5000);    
-            }
             
             $('input[type=text]').on('input',
                 function(){
@@ -110,7 +115,6 @@ function receiver() {
 
 
 function toScoreboard(){
-    $('#trial').css('display','none');
     $('#scoreboard').css('display','block');
 
     trial.catch.time = Date.now();
@@ -122,13 +126,8 @@ function toScoreboard(){
     } else{
         $('#totalScoreboardDiv').css('opacity',1);
     }
-
-    if(trial.role == 'sender'){
-        
-    }
-
     
-    $('.playerScore').html(expt.scoreTotal.player );
+    $('.playerScore').html(expt.scoreTotal.player);
     $('.oppScore').html(expt.scoreTotal.opp);
 
     if(trial.exptPart == "practice"){

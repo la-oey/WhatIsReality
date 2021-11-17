@@ -80,7 +80,7 @@ function report(){
     computerInfer();
 
     function senderWait() {
-        flickerWait();
+        flickerWait("opp");
 
         trial.time.wait = 1000 + 3000*exponential(0.75);
         setTimeout(function(){
@@ -130,9 +130,12 @@ function computerInfer(){
 
 function submitTrial(){
     trial.time.response = Date.now() - trial.time.start;
+    $('#trial').css('display','none');
     score();
-    if(trial.exptPart == 'practice' || trial.exptPart == 'trial' & (trial.trialNumber + 1) % 5 != 0){
+    if(trial.exptPart == 'practice' | (trial.exptPart == 'trial' & (trial.trialNumber + 1) % 5 == 0)){
         toScoreboard();
+    } else{
+        trialDone();
     }
 }
 
@@ -184,10 +187,15 @@ function restartTrial(){
     trial.startTime = Date.now();
 }
 
-function flickerWait(){
+function flickerWait(type){
     var op = 0.1;
     var increment = 0.1;
-    $('#waiting').html('<p>Waiting for your opponent...</p>');
+    if(type == "opp"){
+        $('#waiting').html('<p>Waiting for your opponent...</p>');
+    } else if(type == "draw"){
+        $('#waiting').html('<p>Drawing marbles...</p>');
+    }
+    
     $('#waiting').css('opacity',0);
     trial.timer = setInterval(go, 50)
     function go(){
