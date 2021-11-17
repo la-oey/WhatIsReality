@@ -76,7 +76,8 @@ function marble(container, color, size, locX, locY, idx, clickable){
 
 function report(){
     trial.responseTime = Date.now() - trial.responseStartTime;
-    $('#report-button').prop('disabled', true);
+    $('#next').prop('disabled',true);
+    computerInfer();
 
     function senderWait() {
         flickerWait();
@@ -86,6 +87,9 @@ function report(){
             clearInterval(trial.timer);
             $('#waiting').html("<p>Your opponent made a decision.</p>")
             $('#waiting').css('opacity',1);
+            $('#next').html("Next!");
+            $('#next').unbind("click");
+            $('#next').bind("click", submitTrial);
             $('#next').prop('disabled',false);
         }, trial.time.wait);
     }
@@ -93,17 +97,15 @@ function report(){
 }
 
 function computerDraw(){
-    //groundTruth
-    for(let i=0; i<expt.marblesSampled; i++){
-        if(Math.random() < expt.probRed){
-            trial.marbles.drawn.red += 1;
-        } else{
-            trial.marbles.drawn.blue += 1;
-        }
-    }
+    // groundTruth
+    trial.marbles.drawn.red = getK(expt.marblesSampled, expt.probRed);
+    trial.marbles.drawn.blue = expt.marblesSampled - trial.marbles.drawn.red;
 
-    let rand = Math.random();
-    let lie = getK(expt.marblesSampled, expt.probRed, rand); //detector's belief about the distribution
+    // internalSample
+    let lie = getK(expt.marblesSampled, expt.probRed); //detector's belief about the distribution
+    trial.compSample = lie;
+    console.log("truth: " + trial.marbles.drawn.red);
+    console.log("lie: " + lie);
     if(lie <= trial.marbles.drawn.red){
         trial.marbles.reported.red = trial.marbles.drawn.red;
         trial.marbles.reported.blue = trial.marbles.drawn.blue;
@@ -113,18 +115,42 @@ function computerDraw(){
     }
 }
 
-function inferTruth(){
-    trial.time.response = Date.now() - trial.time.start;
+function computerInfer(){
+    let sample = getK(expt.marblesSampled, expt.probRed); //detector's belief about the distribution
+    trial.compSample = sample;
+    console.log("sample: " + sample);
+    if(sample > trial.marbles.reported.red){
+        trial.marbles.inferred.red = trial.marbles.reported.red;
+        trial.marbles.inferred.blue = trial.marbles.reported.blue;
+    } else{
+        trial.marbles.inferred.red = sample;
+        trial.marbles.inferred.blue = expt.marblesSampled - sample;
+    }
+}
 
-    $('#next').prop('disabled',false);
+function submitTrial(){
+    trial.time.response = Date.now() - trial.time.start;
+    score();
+    if(trial.exptPart == 'practice' || trial.exptPart == 'trial' & (trial.trialNumber + 1) % 5 != 0){
+        toScoreboard();
+    }
+}
+
+function score(){
+    let error = Math.abs(trial.marbles.inferred.red - trial.marbles.drawn.red);
+    trial.score.player = trial.role == "sender" ? error : -error;
+    trial.score.opp = trial.role == "sender" ? -error : error;
+
+    expt.scoreTotal.player += trial.score.player;
+    expt.scoreTotal.opp += trial.score.opp;
 }
 
 function restartTrial(){
     $('#trial').css('display','block');
     if(trial.role == "sender"){
-        var roletxt = "marble-drawer"
+        var roletxt = "marble-drawer";
     } else{
-        var roletxt = "responder"
+        var roletxt = "responder";
     }
     $('.trialNum').html("Round " + (trial.trialNumber+1) + ": You are the <i>" + roletxt + "</i>");
     $('#urnsvg').empty();
@@ -139,10 +165,11 @@ function restartTrial(){
     $('#sendResponse').css('display','none');
     $('#receiveResponse').css('display','none');
     $('input[type=text]').val("");
+    $('#waiting').css('opacity',0);
 
-    if(trial.exptPart != 'practice'){
-        trial.pseudoRound = trial.trialNumber in expt.pseudo;
-    }
+    // if(trial.exptPart != 'practice'){
+    //     trial.pseudoRound = trial.trialNumber in expt.pseudo;
+    // }
 
     trial.catch.key = -1;
     trial.catch.response = -1;
@@ -338,10 +365,10 @@ function recordData(){
         drawnRed: trial.marbles.drawn.red,
         reportedRed: trial.marbles.reported.red,
         inferredRed: trial.marbles.inferred.red,
-        playerTrialScore: trial.playerTrialScore,
-        oppTrialScore: trial.oppTrialScore,
-        playerTotalScore: expt.stat.playerTotalScore,
-        oppTotalScore: expt.stat.oppTotalScore,
+        playerTrialScore: trial.score.player,
+        oppTrialScore: trial.score.opp,
+        playerTotalScore: expt.scoreTotal.player,
+        oppTotalScore: expt.scoreTotal.opp,
         waitTime: trial.time.wait,
         responseTime: trial.time.response,
         // catchQuestion: trial.catch.question,
@@ -379,12 +406,22 @@ function cbinom(n, p, k){
     }
 }
 
-function getK(n, p, r){
-    var i = 0;
-    while(r > cbinom(n, p, i)){
-        i += 1;
+// function getK(n, p, r){
+//     var i = 0;
+//     while(r > cbinom(n, p, i)){
+//         i += 1;
+//     }
+//     return i;
+// }
+
+function getK(n, p){
+    let k = 0;
+    for(let i=0; i<n; i++){
+        if(Math.random() < p){
+            k += 1;
+        }
     }
-    return i;
+    return k;
 }
 
 function exponential(lambda){

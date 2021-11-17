@@ -36,7 +36,7 @@ function clickPostPractice(){
     //expt.pseudo = distributePseudo(expt.trials, 0, 10);
     expt.roleFirst = sample(expt.roles);
     trial.role = expt.roleFirst;
-    if(expt.role == 'sender'){
+    if(trial.role == 'sender'){
         sender();
     } else{
         receiver();
@@ -58,6 +58,8 @@ function sender() {
     $('#blueRep').html(trial.marbles.reported.blue);
     $('#sendResponse').css('display','block');
     $('#next').html("Report!");
+    //$('#next').off("click");
+    $('#next').bind("click", report);
 }
 
 
@@ -68,7 +70,7 @@ function receiver() {
 
     $('#trialInstruct').html("");
     $('#receiveResponse').css({'display':'block', 'opacity':0});
-    function bullshitDetectWait() {
+    function receiverWait() {
         flickerWait();
         
         trial.time.wait = 3000 + 6000*exponential(0.75);
@@ -98,9 +100,9 @@ function receiver() {
             $('#receiveResponse').css('opacity',1);
             
             trial.responseStartTime = Date.now();
-        }, trial.waitTime);
+        }, trial.time.wait);
     }
-    bullshitDetectWait();
+    receiverWait();
 }
 
 
@@ -112,89 +114,25 @@ function toScoreboard(){
     trial.catch.time = Date.now();
     if(expt.catchTrials.includes(trial.trialNumber)){
         $('#catchQ').show();
-        catchTrial(trial.roleCurrent, trial.exptPart);
+        catchTrial(trial.role, trial.exptPart);
     } else if(trial.exptPart == 'trial' & (trial.trialNumber + 1) % 5 != 0){
         $('#totalScoreboardDiv').css('opacity',0);
     } else{
         $('#totalScoreboardDiv').css('opacity',1);
     }
 
-    if(trial.roleCurrent == 'sender'){
-        computerBSDetector();
+    if(trial.role == 'sender'){
+        
     }
 
-    // if(!trial.callBS){
-    //     if(trial.roleCurrent == 'sender'){
-    //         trial.callBStxt = "Your opponent <b style='color:green'>accepted</b> your reported answer.<br><br>";
-    //         trial.playerTrialScore = trial.reportedDrawn; 
-    //         trial.oppTrialScore = expt.marblesSampled - trial.reportedDrawn;
-    //         if(trial.reportedDrawn == trial.drawnRed){
-    //             trial.callBStxt = trial.callBStxt + "You were <b>telling the truth</b>.<br><br>";
-    //             expt.stat.truth += 1;
-    //             expt.stat.truth_noBS += 1;
-    //         } else{
-    //             trial.callBStxt = trial.callBStxt + "You were <b>lying</b>.<br>The true answer was <b>" + trial.drawnRed + "</b>.";
-    //             expt.stat.lie += 1;
-    //             expt.stat.lie_noBS += 1;
-    //         }
-    //     } else{
-    //         trial.callBStxt = "You <b style='color:green'>accepted</b> your opponent's reported answer.<br><br>";
-    //         expt.stat.noBS += 1;
-    //         trial.oppTrialScore = trial.reportedDrawn;
-    //         trial.playerTrialScore = expt.marblesSampled - trial.reportedDrawn;
-    //         if(trial.reportedDrawn == trial.drawnRed){
-    //             trial.callBStxt = trial.callBStxt + "Your opponent was <b>telling the truth</b>.<br><br>";
-    //             expt.stat.noBS_truth += 1;
-    //         } else{
-    //             trial.callBStxt = trial.callBStxt + "Your opponent was <b>lying</b>.<br>The true answer was <b>" + trial.drawnRed + "</b>.";
-    //             expt.stat.noBS_lie += 1;
-    //         }
-    //     }
-    // } else{
-    //     if(trial.roleCurrent == 'sender'){
-    //         trial.callBStxt = "Your opponent <b style='color:red'>rejected</b> your reported answer.<br><br>";
-    //         //if player is telling the truth
-    //         if(trial.reportedDrawn == trial.drawnRed){
-    //             trial.callBStxt = trial.callBStxt + "You were <b>telling the truth</b>.<br><br>";
-    //             expt.stat.truth += 1;
-    //             expt.stat.truth_BS += 1;
-    //             trial.playerTrialScore = trial.reportedDrawn; //opponent gets 10 - points as reported w/ -5 penalty
-    //             trial.oppTrialScore = expt.marblesSampled - trial.reportedDrawn - 5; //player gets points as reported
-
-    //         } else{
-    //             trial.callBStxt = trial.callBStxt + "You were <b>lying</b>.<br>The true answer was <b>" + trial.drawnRed + "</b>.";
-    //             expt.stat.lie += 1;
-    //             expt.stat.lie_BS += 1;
-    //             trial.playerTrialScore = -5; //player gets -5 points
-    //             trial.oppTrialScore = 5; //opponent gets +5 points
-    //         }
-    //     } else{
-    //         trial.callBStxt = "You <b style='color:red'>rejected</b> your opponent's reported answer.<br><br>";
-    //         expt.stat.BS += 1;
-    //         //if player catches a liar
-    //         if(trial.reportedDrawn == trial.drawnRed){
-    //             trial.callBStxt = trial.callBStxt + "Your opponent was <b>telling the truth</b>.<br><br>";
-    //             expt.stat.BS_truth += 1;
-    //             trial.playerTrialScore = expt.marblesSampled - trial.reportedDrawn - 5; //player gets 10 - points as reported w/ -5 penalty
-    //             trial.oppTrialScore = trial.reportedDrawn; //opponent gets points as reported
-    //         } else{
-    //             trial.callBStxt = trial.callBStxt + "Your opponent was <b>lying</b>.<br>The true answer was <b>" + trial.drawnRed + "</b>.";
-    //             expt.stat.BS_lie += 1;
-    //             trial.playerTrialScore = 5; //player gets +5 points
-    //             trial.oppTrialScore = -5; //opponent gets -5 points
-    //         }
-    //     }
-    // }
-
-    expt.stat.playerTotalScore += trial.playerTrialScore;
-    expt.stat.oppTotalScore += trial.oppTrialScore;
-    $('.playerScore').html(expt.stat.playerTotalScore);
-    $('.oppScore').html(expt.stat.oppTotalScore);
+    
+    $('.playerScore').html(expt.scoreTotal.player );
+    $('.oppScore').html(expt.scoreTotal.opp);
 
     if(trial.exptPart == "practice"){
         $('#calledBS').html(trial.callBStxt);
-        $('#playerPts').html(scorePrefix(trial.playerTrialScore));
-        $('#oppPts').html(scorePrefix(trial.oppTrialScore));
+        $('#playerPts').html(scorePrefix(trial.score.player));
+        $('#oppPts').html(scorePrefix(trial.score.opp));
         //$('.playerScore').html((expt.stat.playerTotalScore - trial.playerTrialScore) + " + " + trial.playerTrialScore + " = " + expt.stat.playerTotalScore);
         //$('.oppScore').html((expt.stat.oppTotalScore - trial.oppTrialScore) + " + " + trial.oppTrialScore + " = " + expt.stat.oppTotalScore);
     } else{
