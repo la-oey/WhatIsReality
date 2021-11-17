@@ -85,7 +85,7 @@ function report(){
         trial.time.wait = 1000 + 3000*exponential(0.75);
         setTimeout(function(){
             clearInterval(trial.timer);
-            $('#waiting').html("<p>Your opponent made a decision.</p>")
+            $('#waiting').html("<p>Your opponent made a decision.</p>");
             $('#waiting').css('opacity',1);
             $('#next').html("Next!");
             $('#next').unbind("click");

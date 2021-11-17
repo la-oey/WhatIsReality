@@ -58,7 +58,7 @@ function sender() {
     $('#blueRep').html(trial.marbles.reported.blue);
     $('#sendResponse').css('display','block');
     $('#next').html("Report!");
-    //$('#next').off("click");
+    $('#next').unbind("click");
     $('#next').bind("click", report);
 }
 
@@ -70,10 +70,12 @@ function receiver() {
 
     $('#trialInstruct').html("");
     $('#receiveResponse').css({'display':'block', 'opacity':0});
+    // $('#waiting').html("<p>Your opponent made a decision.</p>")
     function receiverWait() {
         flickerWait();
         
-        trial.time.wait = 3000 + 6000*exponential(0.75);
+        // trial.time.wait = 3000 + 6000*exponential(0.75);
+        trial.time.wait = 1000 + 3000*exponential(0.75);
         setTimeout(function(){
             clearInterval(trial.timer);
             $('#waiting').css('opacity',0);
