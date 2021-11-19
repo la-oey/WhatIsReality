@@ -53,11 +53,12 @@ function sender() {
     $('#next').prop('disabled',true);
     $('#next').unbind("click");
     $('#next').bind("click", report);
+    $('#sendResponse').css({'display':'block', 'opacity':0});
 
     function drawingWait(){ //LO: Check why this isn't working
         flickerWait("draw");
 
-        // trial.time.wait = 1000 + 3000*exponential(0.75);
+        trial.time.wait = 1000 + 3000*exponential(0.75);
         setTimeout(function(){
             clearInterval(trial.timer);
 
@@ -68,10 +69,10 @@ function sender() {
             trial.marbles.reported = trial.marbles.drawn;
             $('#redRep').html(trial.marbles.reported.red);
             $('#blueRep').html(trial.marbles.reported.blue);
-            $('#sendResponse').css('display','block');
+            $('#sendResponse').css('opacity',1);
             $('#next').prop('disabled',false);
             trial.responseStartTime = Date.now();
-        })
+        }, trial.time.wait);
     }
     drawingWait();
 }

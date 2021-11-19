@@ -71,6 +71,7 @@ function marble(container, color, size, locX, locY, idx, clickable){
         trial.marbles.reported.array[idx] = newColor;
         $('#redRep').html(trial.marbles.reported.red);
         $('#blueRep').html(trial.marbles.reported.blue);
+        flash(); //indicate number change by flashing number
       });
 }
 
@@ -104,8 +105,8 @@ function computerDraw(){
     // internalSample
     let lie = getK(expt.marblesSampled, expt.probRed); //detector's belief about the distribution
     trial.compSample = lie;
-    console.log("truth: " + trial.marbles.drawn.red);
-    console.log("lie: " + lie);
+    debugLog("truth: " + trial.marbles.drawn.red);
+    debugLog("lie: " + lie);
     if(lie <= trial.marbles.drawn.red){
         trial.marbles.reported.red = trial.marbles.drawn.red;
         trial.marbles.reported.blue = trial.marbles.drawn.blue;
@@ -118,7 +119,7 @@ function computerDraw(){
 function computerInfer(){
     let sample = getK(expt.marblesSampled, expt.probRed); //detector's belief about the distribution
     trial.compSample = sample;
-    console.log("sample: " + sample);
+    debugLog("sample: " + sample);
     if(sample > trial.marbles.reported.red){
         trial.marbles.inferred.red = trial.marbles.reported.red;
         trial.marbles.inferred.blue = trial.marbles.reported.blue;
@@ -188,8 +189,8 @@ function restartTrial(){
 }
 
 function flickerWait(type){
-    var op = 0.1;
-    var increment = 0.1;
+    let op = 0.1;
+    let increment = 0.1;
     if(type == "opp"){
         $('#waiting').html('<p>Waiting for your opponent...</p>');
     } else if(type == "draw"){
@@ -197,7 +198,7 @@ function flickerWait(type){
     }
     
     $('#waiting').css('opacity',0);
-    trial.timer = setInterval(go, 50)
+    trial.timer = setInterval(go, 50);
     function go(){
         op += increment;
         $('#waiting').css('opacity', op);
@@ -208,6 +209,11 @@ function flickerWait(type){
             increment = -increment;
         }
     }
+}
+
+function flash(){
+    $('.rep').css('opacity',0);
+    $('.rep').animate({'opacity':1}); 
 }
 
 
