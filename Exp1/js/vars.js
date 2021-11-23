@@ -43,7 +43,10 @@ var trial = {
     score: {
         sender: 0,
         receiver: 0
-    }
+    },
+    numClicks: 0,
+    numFlips: 0,
+    flipThresh: 1
 };
 var client = parseClient();
 var trialData = []; // store of all trials

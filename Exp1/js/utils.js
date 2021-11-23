@@ -48,6 +48,15 @@ function marble(container, color, size, locX, locY, idx, clickable){
       .style("fill",color)
       .on("click", function(event) {
         if (!clickable) return;
+
+        trial.numClicks += 1;
+        if (trial.numClicks < trial.flipThresh) {
+          return;
+        } else {
+          trial.flipThresh += 1
+          trial.numClicks = 0;
+        }
+
         currentColor = d3.select(this).style("fill")
         newColor = "";
         if (currentColor === "red") {
@@ -60,6 +69,7 @@ function marble(container, color, size, locX, locY, idx, clickable){
           trial.marbles.reported.blue -= 1;
         }
         d3.select(this).style("fill", newColor);
+        trial.numFlips += 1;
         trial.marbles.reported.array[idx] = newColor;
         $('#redRep').html(trial.marbles.reported.red);
         $('#blueRep').html(trial.marbles.reported.blue);
