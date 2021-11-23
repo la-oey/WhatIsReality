@@ -245,115 +245,76 @@ function flash(){
 
 function submitCatchText(){
     trial.catch.responseTime = Date.now() - trial.catch.responseStartTime;
-    $('input[type=text]').prop('disabled',true);
-    $('input[type=text]').css('opacity',0.7);
+    $('#reportCatch').prop('disabled',true);
+    $('#reportCatch').css('opacity',0.7);
     $('#catch-button').prop('disabled', true);
-    var timeoutTime = 0;
+    let timeoutTime = 0;
     if(trial.catch.key == trial.catch.response){
-        $('#catchQ').append('<img src="img/yup.png" height=18 vertical-align="middle" hspace="20">');
+        $('#catchFeedback').attr('src','img/yup.png');
     } else{
-        $('#catchQ').append('<img src="img/nah.png" height=18 vertical-align="middle" hspace="20">');
+        $('#catchFeedback').attr('src','img/nah.png');
         timeoutTime = 3000;
     }
     setTimeout(function(){
         if(trial.exptPart == 'practice' | (trial.trialNumber + 1) % 5 == 0){
             $('.scoreboardDiv').css('opacity','1');
         }
-        $('.scoreReport').css('opacity','1');
         $('#nextScoreboard').css('opacity','1');
     }, timeoutTime);
 }
 
-function submitCatchSlider(){
-    trial.catch.responseTime = Date.now() - trial.catch.responseStartTime;
-    trial.catch.response = $('input[type=range]').val();
-    $('input[type=range]').prop('disabled',true);
-    $('input[type=range]').css('opacity',0.7);
-    $('#catch-button').prop('disabled', true);
-    var timeoutTime = 0;
-    if(trial.catch.key == 'NA' || trial.catch.key >= (trial.catch.response - 25) & trial.catch.key <= (trial.catch.response + 25)){
-        $('#postSlider').append('<img id="correctSlider" src="img/yup.png" height=18 vertical-align="middle" hspace="20">');
-    } else{
-        $('#postSlider').append('<img id="correctSlider" src="img/nah.png" height=18 vertical-align="middle" hspace="20">');
-        timeoutTime = 3000;
-    }
-    setTimeout(function(){
-        if(trial.exptPart == 'practice' | (trial.trialNumber + 1) % 5 == 0){
-            $('.scoreboardDiv').css('opacity','1');
-        }
-        $('.scoreReport').css('opacity','1');
-        $('#nextScoreboard').css('opacity','1');
-    }, timeoutTime);
-}
+// function submitCatchSlider(){
+//     trial.catch.responseTime = Date.now() - trial.catch.responseStartTime;
+//     trial.catch.response = $('input[type=range]').val();
+//     $('input[type=range]').prop('disabled',true);
+//     $('input[type=range]').css('opacity',0.7);
+//     $('#catch-button').prop('disabled', true);
+//     var timeoutTime = 0;
+//     if(trial.catch.key == 'NA' || trial.catch.key >= (trial.catch.response - 25) & trial.catch.key <= (trial.catch.response + 25)){
+//         $('#postSlider').append('<img id="correctSlider" src="img/yup.png" height=18 vertical-align="middle" hspace="20">');
+//     } else{
+//         $('#postSlider').append('<img id="correctSlider" src="img/nah.png" height=18 vertical-align="middle" hspace="20">');
+//         timeoutTime = 3000;
+//     }
+//     setTimeout(function(){
+//         if(trial.exptPart == 'practice' | (trial.trialNumber + 1) % 5 == 0){
+//             $('.scoreboardDiv').css('opacity','1');
+//         }
+//         $('#nextScoreboard').css('opacity','1');
+//     }, timeoutTime);
+// }
 
 
 
-function catchTrial(role, exptPart){
+function catchTrial(role){
     if(trial.exptPart == "practice" & trial.trialNumber == 0){
-        $('#catchQ').before("<p id='qInstruct'>Throughout the experiment, you will randomly be asked questions about the task.<br>If you get the question wrong, you have to wait 3 seconds before being able to move on.<br><br></p>")
+        let catchInstructTxt = "<p id='qInstruct'>"
+        catchInstructTxt += "Throughout the experiment, you will randomly be asked questions about the task.<br>"
+        catchInstructTxt += "If you get the question wrong, you have to wait 3 seconds before being able to move on.<br><br></p>"
+        $('#catchQ').before(catchInstructTxt);
     }
-    var randomCatch = Math.random();
-    if(randomCatch < 0.5){
-        if(randomCatch < 0.25){
-            trial.catch.question = "What was the proportion of red to blue marbles from your perspective?";
-            if(role == 'sender'){
-                trial.catch.key = trial.prob.senderRed*100;
-            } else{
-                trial.catch.key = trial.prob.receiverRed*100;
-            }
-        } else{
-            trial.catch.question = "What was the proportion of red to blue marbles from your opponent's perspective?";
-            if(role == 'sender'){
-                trial.catch.key = trial.prob.receiverRed*100;
-            } else{
-                trial.catch.key = 'NA';
-            }
-        }
-        $('input[type=range]').prop('disabled',false);
-        $('input[type=range]').css('opacity',1);
-        $('input[type=range]').prop('value',50);
-        $('#catchQ').html('<label>'+trial.catch.question+'</label>');
-        $('#sliderContainer').css('display','block');
-        $('#postSlider').html('<br><br><button class="active-button" id="catch-button" type="button" onclick="submitCatchSlider();">Submit</button>');
-        $('#postSlider').css('display','block');
-
-        $('#slider').on('click input',
-        function(){
-            var val = $('#slider').prop('value');
-            var dynamColor = 'linear-gradient(90deg, red ' + val + '%, blue ' + val + '%)';
-
-            $('#slider').removeClass('inactiveSlider');
-            $('#slider').addClass('activeSlider');
-            $('.activeSlider').css('background',dynamColor);
-            $('#catch-button').prop('disabled',false);
-        });
-
+    if(role == 'sender'){
+        trial.catch.question = 'How many red marbles did you actually draw? ';
+        trial.catch.key = trial.marbles.drawn.red;
     } else{
-        if(role == 'sender'){
-            trial.catch.question = 'How many red marbles did you actually draw?';
-            trial.catch.key = trial.drawnRed;
-        } else{
-            trial.catch.question = 'How many red marbles did your opponent report drawing?';
-            trial.catch.key = trial.reportedDrawn;
-        }
-        $('#catchQ').html('<label>'+trial.catch.question+'</label>');
-        var inputTxt = '<input type="text" id="reportCatch" value="" size="2" maxlength="2" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/> ';
-        inputTxt += '<button class="active-button" id="catch-button" type="button" onclick="submitCatchText();">Submit</button>';
-        $('#catchQ').append(inputTxt);
-
-        $('input[type=text]').on('input',
-            function(){
-                trial.catch.response = parseInt($(this).val());
-                if(trial.catch.response >= 0 && trial.catch.response <= 10 ){
-                    $('#catch-button').prop('disabled',false);
-                } else{
-                    $('#catch-button').prop('disabled',true);
-                }
-        });
+        trial.catch.question = 'How many red marbles did your opponent report drawing? ';
+        trial.catch.key = trial.marbles.reported.red;
     }
+    $('#catchQlab').html(trial.catch.question);
+    $('#catchFeedback').attr('src','');
+    $('#reportCatch').prop('disabled',false);
+
+    $('#reportCatch').on('input',
+        function(){
+            trial.catch.response = parseInt($('#reportCatch').val());
+            if(trial.catch.response >= 0 && trial.catch.response <= 100 ){
+                $('#catch-button').prop('disabled',false);
+            } else{
+                $('#catch-button').prop('disabled',true);
+            }
+    });
 
     $('#catch-button').prop('disabled',true);
-    $('.scoreReport').css('opacity','0');
     $('.scoreboardDiv').css('opacity','0');
     $('#nextScoreboard').css('opacity','0');
 }
@@ -477,11 +438,6 @@ function scorePrefix(score){
 }
 
 function distributeChecks(totalTrials, freq){
-    // var round = Math.floor(totalTrials * freq);
-    // var checkRounds = [];
-    // for(var i=0; i<totalTrials/round; i++){
-    //     checkRounds.push(round*i + Math.floor(randomDouble(0,round)));
-    // }
     var shuffled = shuffle([...Array(totalTrials).keys()]);
     return(shuffled.slice(0,Math.floor(totalTrials*freq)));
 }

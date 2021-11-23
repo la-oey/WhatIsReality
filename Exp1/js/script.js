@@ -5,6 +5,7 @@
 // TODO, Potentially: pick randomly between human/threePoints instructions.
 function pageLoad() {
     clicksMap[startPage]();
+    expt.cost = sample(expt.cost);
 }
 
 function clickConsent() {
@@ -21,7 +22,7 @@ function clickInstructions() {
 
 function clickPrePractice(){
     $('#prePractice').css('display','none');
-    //expt.catchTrials = distributeChecks(expt.practiceTrials, 1); // 50% of practice trials have an attention check
+    expt.catchTrials = distributeChecks(expt.practiceTrials, 1); // 50% of practice trials have an attention check
     if(expt.roleFirst == 'sender'){
         sender();
     } else{
@@ -32,7 +33,7 @@ function clickPrePractice(){
 function clickPostPractice(){
     $('#postPractice').css('display','none');
 
-    //expt.catchTrials = distributeChecks(expt.trials, 0.15); // 0.1 of expt trials have an attention check
+    expt.catchTrials = distributeChecks(expt.trials, 1); // 0.1 of expt trials have an attention check
     //expt.pseudo = distributePseudo(expt.trials, 0, 10);
     expt.roleFirst = sample(expt.roles);
     trial.role = expt.roleFirst;
@@ -85,6 +86,8 @@ function sender() {
 function receiver() {
     restartTrial();
     $('#next').prop('disabled',true);
+    $('#next').unbind("click");
+    $('#next').bind("click", submitTrial);
 
     $('#trialInstruct').html("<p class='instructText'><br></p>");
     $('#receiveResponse').css({'display':'block', 'opacity':0});
@@ -98,11 +101,11 @@ function receiver() {
             fillUrn(true);
             $('#reportedMarbles').html(trial.marbles.reported.red);
 
-            $('input[type=text]').on('input',
+            $('#reportTruth').on('input',
                 function(){
-                    trial.marbles.inferred.red = parseInt($(this).val());
+                    trial.marbles.inferred.red = parseInt($('#reportTruth').val());
                     trial.marbles.inferred.blue = expt.marblesSampled - trial.marbles.inferred.red;
-                    if(trial.marbles.drawn.red >= 0 && trial.marbles.drawn.red <= 100){
+                    if(trial.marbles.inferred.red >= 0 && trial.marbles.inferred.red <= 100){
                         $('#next').prop('disabled',false);
                     } else{
                         $('#next').prop('disabled',true);
@@ -141,7 +144,6 @@ function toScoreboard(){
         //$('.playerScore').html((expt.stat.playerTotalScore - trial.playerTrialScore) + " + " + trial.playerTrialScore + " = " + expt.stat.playerTotalScore);
         //$('.oppScore').html((expt.stat.oppTotalScore - trial.oppTrialScore) + " + " + trial.oppTrialScore + " = " + expt.stat.oppTotalScore);
     } else{
-        $('.scoreReport').html("Click to move on to the next round.");
         $('#trialScoreboardDiv').hide();
     }
 }

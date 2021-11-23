@@ -125,27 +125,25 @@ TODO:
 
 <div id="scoreboard" class="screen">
 	<p class="mtitle trialNum">Round</p><br>
-    <div id="catchQ"></div><br>
-    <center>
-		<div id="sliderContainer">
-	    	<input id='slider' class='inactiveSlider' type='range' min='0' max='100' value=''><br>
-	    	<div class="min"><p>most<br>blue</p></div>
-	    	<div class="max"><p>most<br>red</p></div>
-	    </div>
-	    <div id="postSlider"></div><br>
-	</center>
-	<br>
-	<p class="scoreReport" id="calledBS"></p>
-
-    <div class="scoreboardDiv" id="trialScoreboardDiv">
-        <div class="scoreCol"><b id="playerPts"></b></div>
-        <div class="scoreCol"><b id="oppPts"></b></div>
+    <div id="catchQ">
+        <label id="catchQlab"></label>
+        <input type="text" id="reportCatch" value="" size="3" maxlength="3" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+        <button class="active-button" id="catch-button" type="button" onclick="submitCatchText();">Submit</button>
+        <img id="catchFeedback" height=18 vertical-align="middle" hspace="20">
     </div>
-	<div class="scoreboardDiv" id="totalScoreboardDiv">
-        <center><h2>Scoreboard</h2></center>
-	    <div class="scoreCol">Your Score:<br><b class="totalScores playerScore">0</b></div>
-	    <div class="scoreCol">Opponent's Score:<br><b class="totalScores oppScore">0</b></div>
- 	</div>
+    <br>
+    <div id="scoreboard">
+    	<p class="scoreReport" id="calledBS"></p>
+        <div class="scoreboardDiv" id="trialScoreboardDiv">
+            <div class="scoreCol"><b id="playerPts"></b></div>
+            <div class="scoreCol"><b id="oppPts"></b></div>
+        </div>
+    	<div class="scoreboardDiv" id="totalScoreboardDiv">
+            <center><h2>Scoreboard</h2></center>
+    	    <div class="scoreCol">Your Score:<br><b class="totalScores playerScore">0</b></div>
+    	    <div class="scoreCol">Opponent's Score:<br><b class="totalScores oppScore">0</b></div>
+     	</div>
+     </div>
 	<br><br><br><br><br>
     <button class="big-button active-button" id="nextScoreboard" type="button" onclick="trialDone();">Next!</button>
 </div>

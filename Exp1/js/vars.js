@@ -7,6 +7,7 @@ var expt = {
     probRed: 0.5,
     roleFirst: 'sender', //roles: {'sender','receiver'}
     roles: ['sender','receiver'],
+    cost: [uniformCost, linearCost],
     catchTrials: [],
     scoreTotal: {
         player: 0,
@@ -60,4 +61,4 @@ var trial = {
 };
 var client = parseClient();
 var trialData = []; // store of all trials
-var startPage = "practice";
+var startPage = "trial";
