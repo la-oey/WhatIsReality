@@ -1,16 +1,32 @@
 var innerRedCt, innerBlueCt, innerMarbleArray, outerRedCt, outerBlueCt, outerMarbleArray;
 
-function fillUrn() {
+function uniformCost() {
+  return;  // no change to flip threshold
+}
+
+function linearCost() {
+  trial.flipThresh += 1;
+}
+
+function fillUrn(receiver=false) {
     let padding = 10;
     let marblesAcross = 10;
     let marblesDown = 10;
 
-    trial.marbles.drawn.red = getK(expt.marblesSampled, expt.probRed, Math.random());
-    let urnRed = trial.marbles.drawn.red;
-    trial.marbles.drawn.blue = expt.marblesSampled - urnRed;
-    let urnBlue = trial.marbles.drawn.blue;
-    trial.marbles.reported.red = trial.marbles.drawn.red;
-    trial.marbles.reported.blue = trial.marbles.drawn.blue;
+    if(!receiver){
+        trial.marbles.drawn.red = getK(expt.marblesSampled, expt.probRed, Math.random());
+        var urnRed = trial.marbles.drawn.red;
+        trial.marbles.drawn.blue = expt.marblesSampled - urnRed;
+        var urnBlue = trial.marbles.drawn.blue;
+        trial.marbles.reported.red = trial.marbles.drawn.red;
+        trial.marbles.reported.blue = trial.marbles.drawn.blue;
+        var interact = true;
+    } else{
+        computerDraw();
+        var urnRed = trial.marbles.reported.red;
+        var urnBlue = trial.marbles.reported.blue;
+        var interact = false;
+    }
 
     let minUrnWidth = .05*$('#urn').width();
     let maxUrnWidth = .95*$('#urn').width();
@@ -31,13 +47,13 @@ function fillUrn() {
         let rowNum = Math.floor(i / marblesAcross);
         let colNum =  (i % marblesAcross)
         let color = marbleArray.shift();
-        marble("#urnsvg", color, 17.5, locX, locY, i, true);
+        marble("#urnsvg", color, 17.5, locX, locY, i, interact, linearCost);
         trial.marbles.drawn.array.push(color);
         trial.marbles.reported.array.push(color);
     }
 }
 
-function marble(container, color, size, locX, locY, idx, clickable){
+function marble(container, color, size, locX, locY, idx, clickable, changeCost){
     d3.select(container)
       .append("circle")
       .attr("cx",locX)
@@ -51,10 +67,13 @@ function marble(container, color, size, locX, locY, idx, clickable){
 
         trial.numClicks += 1;
         if (trial.numClicks < trial.flipThresh) {
+          $('#clickCount').html(trial.flipThresh - trial.numClicks);
           return;
         } else {
-          trial.flipThresh += 1
+          changeCost();
+          $('#flipThresh').html(trial.flipThresh);
           trial.numClicks = 0;
+          $('#clickCount').html(trial.flipThresh - trial.numClicks);
         }
 
         currentColor = d3.select(this).style("fill")
@@ -73,100 +92,109 @@ function marble(container, color, size, locX, locY, idx, clickable){
         trial.marbles.reported.array[idx] = newColor;
         $('#redRep').html(trial.marbles.reported.red);
         $('#blueRep').html(trial.marbles.reported.blue);
+        flash(); //indicate number change by flashing number
       });
 }
 
 function report(){
     trial.responseTime = Date.now() - trial.responseStartTime;
-    $('#report-button').prop('disabled', true);
+    $('#next').prop('disabled',true);
+    computerInfer();
 
     function senderWait() {
-        flickerWait();
+        flickerWait("opp");
 
-        trial.waitTime = 1000 + 3000*exponential(0.75);
+        trial.time.wait = 1000 + 3000*exponential(0.75);
         setTimeout(function(){
             clearInterval(trial.timer);
-            $('#subjResponse').html("<p><br><br>Your opponent made a decision.<br><br><br></p>")
-            $('#subjResponse').css('opacity','1');
+            $('#waiting').html("<p>Your opponent made a decision.</p>");
+            $('#waiting').css('opacity',1);
+            $('#next').html("Next!");
+            $('#next').unbind("click");
+            $('#next').bind("click", submitTrial);
             $('#next').prop('disabled',false);
-        }, trial.waitTime);
+        }, trial.time.wait);
     }
     senderWait();
 }
 
 function computerDraw(){
-    //groundTruth
-    for(var i=0; i<expt.marblesSampled; i++){
-        if(Math.random() < trial.prob.senderRed){
-            trial.drawnRed += 1;
-        } else{
-            trial.drawnBlue += 1;
-        }
-    }
+    // groundTruth
+    trial.marbles.drawn.red = getK(expt.marblesSampled, expt.probRed);
+    trial.marbles.drawn.blue = expt.marblesSampled - trial.marbles.drawn.red;
 
-    if(trial.pseudoRound){
-        trial.reportedDrawn = expt.pseudo[trial.trialNumber];
+    // internalSample
+    let lie = getK(expt.marblesSampled, expt.probRed); //detector's belief about the distribution
+    trial.compSample = lie;
+    debugLog("truth: " + trial.marbles.drawn.red);
+    debugLog("lie: " + lie);
+    if(lie <= trial.marbles.drawn.red){
+        trial.marbles.reported.red = trial.marbles.drawn.red;
+        trial.marbles.reported.blue = trial.marbles.drawn.blue;
     } else{
-        if(trial.exptPart == "trial" & Math.random() < 0.2){ //only occurs during trial
-            trial.compUnifLie = true;
-            trial.reportedDrawn = Math.floor(randomDouble(0,11));
-        } else{
-            var rand = Math.random();
-            var lie = getK(expt.marblesSampled, trial.prob.receiverRed, rand); //detector's belief about the distribution
-            trial.compLie = lie;
-            trial.compDetect = -1;
-            //console.log("CompLie: " + trial.compLie)
-            if(lie <= trial.drawnRed){
-                trial.reportedDrawn = trial.drawnRed;
-            } else{
-                trial.reportedDrawn = lie;
-            }
-        }
+        trial.marbles.reported.red = lie;
+        trial.marbles.reported.blue = expt.marblesSampled - lie;
     }
 }
 
-function inferTruth(){
-    trial.responseTime = Date.now() - trial.responseStartTime;
-    // $('.callout-button').prop('disabled', true);
-
-    $('#next').prop('disabled',false);
+function computerInfer(){
+    let sample = getK(expt.marblesSampled, expt.probRed); //detector's belief about the distribution
+    trial.compSample = sample;
+    debugLog("sample: " + sample);
+    if(sample > trial.marbles.reported.red){
+        trial.marbles.inferred.red = trial.marbles.reported.red;
+        trial.marbles.inferred.blue = trial.marbles.reported.blue;
+    } else{
+        trial.marbles.inferred.red = sample;
+        trial.marbles.inferred.blue = expt.marblesSampled - sample;
+    }
 }
 
-function computerBSDetector(){
-    trial.callBS = false;
-    trial.compDetect = cbinom(expt.marblesSampled, trial.prob.receiverRed, trial.reportedDrawn) - (cbinom(expt.marblesSampled, trial.prob.receiverRed, (expt.marblesSampled*trial.prob.receiverRed)) - 0.5) //lowers prob of celling out by centering cbinom at expected mean
-    trial.compLie = -1;
-    if(Math.random() < trial.compDetect){
-        trial.callBS = true;
+function submitTrial(){
+    trial.time.response = Date.now() - trial.time.start;
+    $('#trial').css('display','none');
+    score();
+    if(trial.exptPart == 'practice' | (trial.exptPart == 'trial' & (trial.trialNumber + 1) % 5 == 0)){
+        toScoreboard();
+    } else{
+        trialDone();
     }
+}
+
+function score(){
+    let error = Math.abs(trial.marbles.inferred.red - trial.marbles.drawn.red);
+    trial.score.player = trial.role == "sender" ? error : -error;
+    trial.score.opp = trial.role == "sender" ? -error : error;
+
+    expt.scoreTotal.player += trial.score.player;
+    expt.scoreTotal.opp += trial.score.opp;
 }
 
 function restartTrial(){
     $('#trial').css('display','block');
-    if(trial.roleCurrent == "sender"){
-        var roletxt = "marble-drawer"
+    if(trial.role == "sender"){
+        var roletxt = "marble-drawer";
     } else{
-        var roletxt = "responder"
+        var roletxt = "responder";
     }
     $('.trialNum').html("Round " + (trial.trialNumber+1) + ": You are the <i>" + roletxt + "</i>");
     $('#urnsvg').empty();
-    $('#tubesvg').empty();
 
-    trial.numRed = 0;
-    trial.numBlue = 0;
-    trial.drawnRed = 0;
-    trial.drawnBlue = 0;
-    fillUrn();
-    trial.compUnifLie = false;
+    trial.marbles.drawn.red = 0;
+    trial.marbles.drawn.blue = 0;
+    trial.marbles.reported.red = 0;
+    trial.marbles.reported.blue = 0;
+    trial.marbles.inferred.red = 0;
+    trial.marbles.inferred.blue = 0;
 
-    $('#subjResponse').css('opacity',0);
-    //$('#receiveResponse').css('display','none');
-    trial.marblesDrawn = [];
+    $('#sendResponse').css('display','none');
+    $('#receiveResponse').css('display','none');
     $('input[type=text]').val("");
+    $('#waiting').css('opacity',0);
 
-    if(trial.exptPart != 'practice'){
-        trial.pseudoRound = trial.trialNumber in expt.pseudo;
-    }
+    // if(trial.exptPart != 'practice'){
+    //     trial.pseudoRound = trial.trialNumber in expt.pseudo;
+    // }
 
     trial.catch.key = -1;
     trial.catch.response = -1;
@@ -181,15 +209,20 @@ function restartTrial(){
     trial.startTime = Date.now();
 }
 
-function flickerWait(){
-    var op = 0.1;
-    var increment = 0.1;
-    $('#subjResponse').html('<p><br><br><br>Waiting for your opponent...<br><br><br></p>');
-    $('#subjResponse').css('opacity',0);
-    trial.timer = setInterval(go, 50)
+function flickerWait(type){
+    let op = 0.1;
+    let increment = 0.1;
+    if(type == "opp"){
+        $('#waiting').html('<p>Waiting for your opponent...</p>');
+    } else if(type == "draw"){
+        $('#waiting').html('<p>Drawing marbles...</p>');
+    }
+
+    $('#waiting').css('opacity',0);
+    trial.timer = setInterval(go, 50);
     function go(){
         op += increment;
-        $('#subjResponse').css('opacity', op);
+        $('#waiting').css('opacity', op);
         if(op >= 1){
             increment = -increment;
         }
@@ -197,6 +230,11 @@ function flickerWait(){
             increment = -increment;
         }
     }
+}
+
+function flash(){
+    $('.rep').css('opacity',0);
+    $('.rep').animate({'opacity':1});
 }
 
 
@@ -356,33 +394,24 @@ function recordData(){
     trialData.push({
         exptPart: trial.exptPart,
         trialNumber: trial.trialNumber,
-        roleCurrent: trial.roleCurrent,
+        roleCurrent: trial.role,
         marblesSampled: expt.marblesSampled,
-        asymm: trial.asymm,
-        probBullshitterRed: trial.prob.senderRed,
-        probBullshitDetectorRed: trial.prob.receiverRed,
-        innerRed: innerRedCt,
-        outerRed: outerRedCt,
-        innerBlue: innerBlueCt,
-        outerBlue: outerBlueCt,
-        drawnRed: trial.drawnRed,
-        reportedDrawn: trial.reportedDrawn,
-        compLie: trial.compLie,
-        compUnifLie: trial.compUnifLie,
-        compDetect: trial.compDetect,
-        callBS: trial.callBS,
-        playerTrialScore: trial.playerTrialScore,
-        oppTrialScore: trial.oppTrialScore,
-        playerTotalScore: expt.stat.playerTotalScore,
-        oppTotalScore: expt.stat.oppTotalScore,
-        waitTime: trial.waitTime,
-        responseTime: trial.responseTime,
-        catchQuestion: trial.catch.question,
-        catchKey: trial.catch.key,
-        catchResponse: trial.catch.response,
-        catchResponseTime: trial.catch.responseTime,
-        pseudoRound: trial.pseudoRound,
-        trialTime: trial.trialTime
+        probRed: expt.probRed,
+        drawnRed: trial.marbles.drawn.red,
+        reportedRed: trial.marbles.reported.red,
+        inferredRed: trial.marbles.inferred.red,
+        playerTrialScore: trial.score.player,
+        oppTrialScore: trial.score.opp,
+        playerTotalScore: expt.scoreTotal.player,
+        oppTotalScore: expt.scoreTotal.opp,
+        waitTime: trial.time.wait,
+        responseTime: trial.time.response,
+        // catchQuestion: trial.catch.question,
+        // catchKey: trial.catch.key,
+        // catchResponse: trial.catch.response,
+        // catchResponseTime: trial.catch.responseTime,
+        // pseudoRound: trial.pseudoRound,
+        trialTime: trial.time.trial
     })
 }
 
@@ -412,12 +441,22 @@ function cbinom(n, p, k){
     }
 }
 
-function getK(n, p, r){
-    var i = 0;
-    while(r > cbinom(n, p, i)){
-        i += 1;
+// function getK(n, p, r){
+//     var i = 0;
+//     while(r > cbinom(n, p, i)){
+//         i += 1;
+//     }
+//     return i;
+// }
+
+function getK(n, p){
+    let k = 0;
+    for(let i=0; i<n; i++){
+        if(Math.random() < p){
+            k += 1;
+        }
     }
-    return i;
+    return k;
 }
 
 function exponential(lambda){

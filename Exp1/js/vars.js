@@ -6,7 +6,12 @@ var expt = {
     marblesSampled: 100, //total number of marbles drawn per trial
     probRed: 0.5,
     roleFirst: 'sender', //roles: {'sender','receiver'}
+    roles: ['sender','receiver'],
     catchTrials: [],
+    scoreTotal: {
+        player: 0,
+        opp: 0
+    },
     // sona: {
     //     experiment_id: 1505,
     //     credit_token: ''
@@ -14,13 +19,14 @@ var expt = {
     debug: false
 };
 var trial = {
-    exptPart: 'practice', //parts: {'practice','trial'}
+    exptPart: 'trial', //parts: {'practice','trial'}
     role: 'sender', //roles: {'sender','receiver'}
     trialNumber: 0,
     time: {
         start: 0,
         trial: 0,
-        response: 0
+        response: 0,
+        wait: 0
     },
     marbles: {
         drawn: { // N/A for receiver
@@ -32,7 +38,12 @@ var trial = {
             red: 0,
             blue: 0,
             array: []
-        }
+        },
+        inferred: {
+            red: 0,
+            blue: 0
+        },
+        compSample: 0
     },
     catch: {
         question: '',
@@ -41,11 +52,10 @@ var trial = {
         time: 0
     },
     score: {
-        sender: 0,
-        receiver: 0
+        player: 0,
+        opp: 0
     },
     numClicks: 0,
-    numFlips: 0,
     flipThresh: 1
 };
 var client = parseClient();

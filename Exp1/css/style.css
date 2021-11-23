@@ -231,15 +231,6 @@ body {
     color: white;
 }
 
-#draw-button {
-    padding: 5px;
-}
-
-#report-button {
-    padding: 3px;
-}
-
-
 #urn {
     float: left;
     border: 2px solid black;
@@ -251,6 +242,7 @@ body {
 #urnsvg {
     height: 100%;
     width: 100%;
+    background-color: white;
 }
 
 #jar {
@@ -259,34 +251,27 @@ body {
     margin-right: 10%;
 }
 
-#tube {
-    /*position: relative;*/
-    float: right;
-    border-color: black;
-    border-style: solid;
-    border-width: 0 2px 2px 2px;
-    margin-right: 10%;
-    width: 5%;
-    height: 365px;
-}
-
-#tubesvg {
-    height: 100%;
-    width: 100%;
-}
-
-#sendResponse {
+.trialText {
     position: relative;
     float: left;
-    padding-top: 5px;
-    padding-bottom: 2px;
     width: 100%;
     margin-left: 0%;
     margin-right: 0%;
 }
 
-#responseAccRej {
-    font-size: 14px;
+#sendResponse {
+    padding-top: 5px;
+    padding-bottom: 2px;
+}
+
+#receiveResponse {
+    padding-top: 2px;
+    padding-bottom: 5px;
+}
+
+#waiting {
+    padding-top: 10px;
+    padding-bottom: 10px;
 }
 
 #reportTruth {
@@ -294,18 +279,9 @@ body {
 }
 
 #reportTruth:focus {
-    border: 2px solid lightblue;
+    border: 3px solid lightblue;
 }
 
-#receiveResponse {
-    position: relative;
-    float: left;
-    padding-top: 2px;
-    padding-bottom: 5px;
-    width: 100%;
-    margin-left: 0%;
-    margin-right: 0%;
-}
 
 #catchQ {
     margin-left: 25%;
