@@ -162,9 +162,14 @@ function submitTrial(){
 }
 
 function score(){
-    let error = Math.abs(trial.marbles.inferred.red - trial.marbles.drawn.red);
-    trial.score.player = trial.role == "sender" ? error : -error;
-    trial.score.opp = trial.role == "sender" ? -error : error;
+    console.log("inferred: " + trial.marbles.inferred.red);
+    console.log("drawn: " + trial.marbles.drawn.red);
+
+    let error = trial.marbles.inferred.red - trial.marbles.drawn.red;
+    let scoreReceiver = -Math.abs(error);
+    let scoreSender = error <= 0 ? 0 : error; // if receiver underestimates, sender gets 0 pts
+    trial.score.player = trial.role == "sender" ? scoreSender : scoreReceiver;
+    trial.score.opp = trial.role == "sender" ? scoreReceiver : scoreSender;
 
     expt.scoreTotal.player += trial.score.player;
     expt.scoreTotal.opp += trial.score.opp;
@@ -440,14 +445,6 @@ function cbinom(n, p, k){
         return binom(n, p, k) + cbinom(n, p, k-1);
     }
 }
-
-// function getK(n, p, r){
-//     var i = 0;
-//     while(r > cbinom(n, p, i)){
-//         i += 1;
-//     }
-//     return i;
-// }
 
 function getK(n, p){
     let k = 0;

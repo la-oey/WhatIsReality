@@ -19,7 +19,7 @@ var expt = {
     debug: false
 };
 var trial = {
-    exptPart: 'trial', //parts: {'practice','trial'}
+    exptPart: 'practice', //parts: {'practice','trial'}
     role: 'sender', //roles: {'sender','receiver'}
     trialNumber: 0,
     time: {
