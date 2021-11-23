@@ -47,7 +47,7 @@ function fillUrn(receiver=false) {
         let rowNum = Math.floor(i / marblesAcross);
         let colNum =  (i % marblesAcross)
         let color = marbleArray.shift();
-        marble("#urnsvg", color, 17.5, locX, locY, i, interact, linearCost);
+        marble("#urnsvg", color, 17.5, locX, locY, i, interact, expt.costF);
         trial.marbles.drawn.array.push(color);
         trial.marbles.reported.array.push(color);
     }
@@ -68,6 +68,7 @@ function marble(container, color, size, locX, locY, idx, clickable, changeCost){
         trial.numClicks += 1;
         if (trial.numClicks < trial.flipThresh) {
           $('#clickCount').html(trial.flipThresh - trial.numClicks);
+          flash('flips'); //indicate number change by flashing number
           return;
         } else {
           changeCost();
@@ -76,7 +77,7 @@ function marble(container, color, size, locX, locY, idx, clickable, changeCost){
           $('#clickCount').html(trial.flipThresh - trial.numClicks);
         }
 
-        currentColor = d3.select(this).style("fill")
+        currentColor = d3.select(this).style("fill");
         newColor = "";
         if (currentColor === "red") {
           newColor = "blue";
@@ -92,7 +93,7 @@ function marble(container, color, size, locX, locY, idx, clickable, changeCost){
         trial.marbles.reported.array[idx] = newColor;
         $('#redRep').html(trial.marbles.reported.red);
         $('#blueRep').html(trial.marbles.reported.blue);
-        flash(); //indicate number change by flashing number
+        flash('marbles');
       });
 }
 
@@ -237,9 +238,9 @@ function flickerWait(type){
     }
 }
 
-function flash(){
-    $('.rep').css('opacity',0);
-    $('.rep').animate({'opacity':1});
+function flash(v){ //v = {'marbles', 'flips'}
+    $('.rep'+v).css('opacity',0);
+    $('.rep'+v).animate({'opacity':1});
 }
 
 

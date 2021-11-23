@@ -7,7 +7,8 @@ var expt = {
     probRed: 0.5,
     roleFirst: 'sender', //roles: {'sender','receiver'}
     roles: ['sender','receiver'],
-    cost: [uniformCost, linearCost],
+    cost: ['unif', 'linear'],
+    costF: [uniformCost, linearCost],
     catchTrials: [],
     scoreTotal: {
         player: 0,

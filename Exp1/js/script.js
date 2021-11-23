@@ -5,7 +5,17 @@
 // TODO, Potentially: pick randomly between human/threePoints instructions.
 function pageLoad() {
     clicksMap[startPage]();
-    expt.cost = sample(expt.cost);
+    //expt.cost = sample(expt.cost);
+    expt.cost = 'linear';
+    expt.costF = expt.cost == 'linear' ? uniformCost : linearCost;
+    if(expt.cost == 'linear'){
+        expt.costF = linearCost;
+        let flipTxt = "Click each marble <b id='flipThresh' class='repflips'></b> time(s) to switch its color. ";
+        flipTxt += "You have <b id='clickCount' class='repflips'></b> clicks left.";
+        $('#sendText').append(flipTxt);
+    } else{
+        expt.costF = uniformCost;
+    }
 }
 
 function clickConsent() {
@@ -49,6 +59,7 @@ function clickPostPractice(){
 
 function sender() {
     restartTrial();
+    trial.flipThresh = 1; //restarts flipping threshold
     $('#trialInstruct').html("<p class='instructText'><br></p>");
     $('#next').html("Report!");
     $('#next').prop('disabled',true);
