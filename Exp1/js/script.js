@@ -55,7 +55,7 @@ function sender() {
     $('#next').bind("click", report);
     $('#sendResponse').css({'display':'block', 'opacity':0});
 
-    function drawingWait(){ //LO: Check why this isn't working
+    function drawingWait(){
         flickerWait("draw");
 
         trial.time.wait = 1000 + 3000*exponential(0.75);
@@ -66,7 +66,8 @@ function sender() {
             fillUrn();
             var marbleInstruct = "<p class='instructText'>You drew 100 marbles. Click on marbles to switch their color.</p>";
             $('#trialInstruct').html(marbleInstruct);
-            trial.marbles.reported = trial.marbles.drawn;
+            trial.marbles.reported.red = trial.marbles.drawn.red;
+            trial.marbles.reported.blue = trial.marbles.drawn.blue;
             $('#redRep').html(trial.marbles.reported.red);
             $('#blueRep').html(trial.marbles.reported.blue);
             $('#flipThresh').html(trial.flipThresh);
