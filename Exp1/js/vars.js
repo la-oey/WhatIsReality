@@ -18,7 +18,7 @@ var expt = {
     //     experiment_id: 1505,
     //     credit_token: ''
     // },
-    debug: false
+    debug: true
 };
 var trial = {
     exptPart: 'practice', //parts: {'practice','trial'}
@@ -57,8 +57,11 @@ var trial = {
         player: 0,
         opp: 0
     },
+    numFlips: 0,
     numClicks: 0,
-    flipThresh: 1
+    flipThresh: 1,
+    prevMarble: -1
+
 };
 var client = parseClient();
 var trialData = []; // store of all trials

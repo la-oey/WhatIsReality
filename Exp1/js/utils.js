@@ -14,6 +14,7 @@ function fillUrn(receiver=false) {
     let marblesDown = 10;
 
     if(!receiver){
+        trial.prevMarble = -1; //reset prev marble clicked
         trial.marbles.drawn.red = getK(expt.marblesSampled, expt.probRed, Math.random());
         var urnRed = trial.marbles.drawn.red;
         trial.marbles.drawn.blue = expt.marblesSampled - urnRed;
@@ -55,17 +56,25 @@ function fillUrn(receiver=false) {
 
 function marble(container, color, size, locX, locY, idx, clickable, changeCost){
     d3.select(container)
-      .append("circle")
-      .attr("cx",locX)
-      .attr("cy",locY)
-      .attr("r",size)
-      .attr("stroke-width",2)
-      .attr("stroke","black")
-      .style("fill",color)
-      .on("click", function(event) {
+    .append("circle")
+    .attr("cx",locX)
+    .attr("cy",locY)
+    .attr("r",size)
+    .attr("stroke-width",2)
+    .attr("stroke","black")
+    .style("fill",color)
+    .on("click", function(event) {
         if (!clickable) return;
 
         trial.numClicks += 1;
+        if(trial.prevMarble != -1 && idx != trial.prevMarble) { // if user switches marble
+            trial.numClicks = 0;
+            trial.prevMarble = -1;
+            $('#clickCount').html(trial.flipThresh - trial.numClicks);
+            flash('flips'); //indicate number change by flashing number
+            return;
+        }
+        trial.prevMarble = idx;
         if (trial.numClicks < trial.flipThresh) {
           $('#clickCount').html(trial.flipThresh - trial.numClicks);
           flash('flips'); //indicate number change by flashing number
@@ -74,6 +83,7 @@ function marble(container, color, size, locX, locY, idx, clickable, changeCost){
           changeCost();
           $('#flipThresh').html(trial.flipThresh);
           trial.numClicks = 0;
+          trial.prevMarble = -1;
           $('#clickCount').html(trial.flipThresh - trial.numClicks);
         }
 
@@ -94,7 +104,7 @@ function marble(container, color, size, locX, locY, idx, clickable, changeCost){
         $('#redRep').html(trial.marbles.reported.red);
         $('#blueRep').html(trial.marbles.reported.blue);
         flash('marbles');
-      });
+  });
 }
 
 function report(){
@@ -105,7 +115,7 @@ function report(){
     function senderWait() {
         flickerWait("opp");
 
-        trial.time.wait = 1000 + 3000*exponential(0.75);
+        trial.time.wait = waittime(1000 + 3000*exponential(0.75));
         setTimeout(function(){
             clearInterval(trial.timer);
             $('#waiting').html("<p>Your opponent made a decision.</p>");
@@ -385,6 +395,14 @@ function recordData(){
 function debugLog(message) {
     if(expt.debug){
         console.log(message);
+    }
+}
+
+function waittime(time) {
+    if(expt.debug){
+        return 0;
+    } else{
+        return time;
     }
 }
 

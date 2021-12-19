@@ -45,7 +45,8 @@ function clickPostPractice(){
 
     expt.catchTrials = distributeChecks(expt.trials, 1); // 0.1 of expt trials have an attention check
     //expt.pseudo = distributePseudo(expt.trials, 0, 10);
-    expt.roleFirst = sample(expt.roles);
+    
+    // expt.roleFirst = sample(expt.roles); // REMOVE LATER
     trial.role = expt.roleFirst;
     if(trial.role == 'sender'){
         sender();
@@ -70,7 +71,7 @@ function sender() {
     function drawingWait(){
         flickerWait("draw");
 
-        trial.time.wait = 1000 + 3000*exponential(0.75);
+        trial.time.wait = waittime(1000 + 3000*exponential(0.75));
         setTimeout(function(){
             clearInterval(trial.timer);
 
@@ -105,7 +106,7 @@ function receiver() {
     function receiverWait() {
         flickerWait("opp");
 
-        trial.time.wait = 3000 + 6000*exponential(0.75);
+        trial.time.wait = waittime(3000 + 6000*exponential(0.75));
         setTimeout(function(){
             clearInterval(trial.timer);
             $('#waiting').css('opacity',0);
