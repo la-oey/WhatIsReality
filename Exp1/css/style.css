@@ -245,10 +245,34 @@ body {
     background-color: white;
 }
 
+#progressInstr {
+    float: left;
+    margin-left: 1.5%;
+    margin-right: 6.5%;
+    width: 18%;
+    margin-bottom: -10px;
+}
+
+#progress {
+    margin-left: 1%;
+    height: 200px;
+    /*width: 200px;*/
+    width: 18%;
+}
+
+#progressTxt {
+    text-anchor: middle;
+    alignment-baseline: middle;
+    font-size: 28px;
+}
+
 #jar {
     width: 13%;
     margin-left: 3%;
     margin-right: 10%;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .trialText {

@@ -15,6 +15,7 @@ function fillUrn(receiver=false) {
 
     if(!receiver){
         trial.prevMarble = -1; //reset prev marble clicked
+        trial.flipThresh = 1; //restarts flipping threshold
         trial.marbles.drawn.red = getK(expt.marblesSampled, expt.probRed, Math.random());
         var urnRed = trial.marbles.drawn.red;
         trial.marbles.drawn.blue = expt.marblesSampled - urnRed;
@@ -52,11 +53,13 @@ function fillUrn(receiver=false) {
         trial.marbles.drawn.array.push(color);
         trial.marbles.reported.array.push(color);
     }
+    flipProgress("gray", 5, 360, true);
 }
 
 function marble(container, color, size, locX, locY, idx, clickable, changeCost){
     d3.select(container)
     .append("circle")
+    .attr("id","c"+idx)
     .attr("cx",locX)
     .attr("cy",locY)
     .attr("r",size)
@@ -67,19 +70,28 @@ function marble(container, color, size, locX, locY, idx, clickable, changeCost){
         if (!clickable) return;
 
         trial.numClicks += 1;
+        currentColor = d3.select(this).style("fill");
+        let newColor = currentColor === "red" ? "blue" : "red";
+        d3.select(this).style("filter", "drop-shadow(0 0 8px black)");
+
+        $('#progress').empty();
         if(trial.prevMarble != -1 && idx != trial.prevMarble) { // if user switches marble
-            trial.numClicks = 0;
-            trial.prevMarble = -1;
+            trial.numClicks = 1;
+            d3.select("#c"+trial.prevMarble).style("filter","drop-shadow(0 0 0 black)");
+            trial.prevMarble = idx;
             $('#clickCount').html(trial.flipThresh - trial.numClicks);
-            flash('flips'); //indicate number change by flashing number
+            // flash('flips'); //indicate number change by flashing number
+            flipProgress(newColor, trial.numClicks, trial.flipThresh);
             return;
         }
         trial.prevMarble = idx;
         if (trial.numClicks < trial.flipThresh) {
           $('#clickCount').html(trial.flipThresh - trial.numClicks);
-          flash('flips'); //indicate number change by flashing number
+          // flash('flips'); //indicate number change by flashing number
+          flipProgress(newColor, trial.numClicks, trial.flipThresh);
           return;
         } else {
+          flipProgress(newColor, trial.numClicks, trial.flipThresh);
           changeCost();
           $('#flipThresh').html(trial.flipThresh);
           trial.numClicks = 0;
@@ -87,25 +99,82 @@ function marble(container, color, size, locX, locY, idx, clickable, changeCost){
           $('#clickCount').html(trial.flipThresh - trial.numClicks);
         }
 
-        currentColor = d3.select(this).style("fill");
-        newColor = "";
         if (currentColor === "red") {
-          newColor = "blue";
           trial.marbles.reported.red -= 1;
           trial.marbles.reported.blue += 1;
         } else {
-          newColor = "red";
           trial.marbles.reported.red += 1;
           trial.marbles.reported.blue -= 1;
         }
-        d3.select(this).style("fill", newColor);
+        d3.select(this).style("filter", "drop-shadow(0 0 0 black)");
+
         trial.numFlips += 1;
         trial.marbles.reported.array[idx] = newColor;
+        d3.select(this).style("fill", newColor);
         $('#redRep').html(trial.marbles.reported.red);
         $('#blueRep').html(trial.marbles.reported.blue);
         flash('marbles');
   });
 }
+
+function flipProgress(color, count, total, static=false){
+    var svg = d3.select("#progress")
+            .append("g")
+            .attr("transform", "translate(100,100)");
+
+    var arc = d3.arc()
+            .innerRadius(60)
+            .outerRadius(65)
+            .startAngle(0)
+            .endAngle(function(d) { return (d.count)/d.total * 2*Math.PI; });
+
+    var g = svg.selectAll("g")
+            .data(buildPerc)
+            .enter().append("g")
+            .attr("class", "arc");
+    g.append("path")
+        .style("fill", color)
+        .attr("d", arc);
+    g.append("text")
+        .text(count + " / " + total)
+        .attr("id", "progressTxt");
+
+    selectArcs();
+    $("#progressTxt").css('visibility','visible');
+    if(static){
+        $("#progressTxt").text("-- / --");
+    }
+
+    function buildPerc() {
+        return [
+            {count: count-1, total: total},
+        ];  
+    } 
+
+    function selectArcs() {
+          d3.selectAll("g.arc > path")
+              .each(arcTween);
+    }
+
+    function arcTween(){
+        d3.select(this)
+            .transition().duration(500)
+            .attrTween("d", tweenArc({ count: count, total: total}));
+        d3.select("text")
+            .style("visibility", "hidden");
+    }
+
+    function tweenArc(b) {
+          return function(a) {
+            var i = d3.interpolate(a, b);
+            for (var key in b) a[key] = b[key]; // update data
+            return function(t) {
+                  return arc(i(t));
+            };
+          };
+    } 
+}
+
 
 function report(){
     trial.responseTime = Date.now() - trial.responseStartTime;
