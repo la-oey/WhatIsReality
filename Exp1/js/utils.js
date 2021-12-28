@@ -53,6 +53,7 @@ function fillUrn(receiver=false) {
         trial.marbles.drawn.array.push(color);
         trial.marbles.reported.array.push(color);
     }
+    $('#progress').empty();
     flipProgress("gray", 5, 360, true);
 }
 
@@ -213,8 +214,8 @@ function computerDraw(){
     // internalSample
     let lie = getK(expt.marblesSampled, expt.probRed); //detector's belief about the distribution
     trial.compSample = lie;
-    debugLog("truth: " + trial.marbles.drawn.red);
-    debugLog("lie: " + lie);
+    // debugLog("truth: " + trial.marbles.drawn.red);
+    // debugLog("lie: " + lie);
     if(lie <= trial.marbles.drawn.red){
         trial.marbles.reported.red = trial.marbles.drawn.red;
         trial.marbles.reported.blue = trial.marbles.drawn.blue;
@@ -235,6 +236,7 @@ function computerInfer(){
         trial.marbles.inferred.red = sample;
         trial.marbles.inferred.blue = expt.marblesSampled - sample;
     }
+    // debugLog("computer's guess: " + trial.marbles.inferred.red);
 }
 
 function submitTrial(){
@@ -249,8 +251,8 @@ function submitTrial(){
 }
 
 function score(){
-    console.log("inferred: " + trial.marbles.inferred.red);
-    console.log("drawn: " + trial.marbles.drawn.red);
+    debugLog("inferred: " + trial.marbles.inferred.red);
+    debugLog("truth: " + trial.marbles.drawn.red);
 
     let error = trial.marbles.inferred.red - trial.marbles.drawn.red;
     let scoreReceiver = -Math.abs(error);

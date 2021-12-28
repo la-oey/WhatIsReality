@@ -68,6 +68,8 @@ function sender() {
     $('#next').unbind("click");
     $('#next').bind("click", report);
     $('#sendResponse').css({'display':'block', 'opacity':0});
+    $('#progressInstr').css('display','block');
+    $('#progress').css('display','block');
 
     function drawingWait(){
         flickerWait("draw");
@@ -104,6 +106,8 @@ function receiver() {
 
     $('#trialInstruct').html("<p class='instructText'><br></p>");
     $('#receiveResponse').css({'display':'block', 'opacity':0});
+    $('#progressInstr').css('display','none');
+    $('#progress').css('display','none');
     function receiverWait() {
         flickerWait("opp");
 

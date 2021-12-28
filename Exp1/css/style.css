@@ -267,9 +267,9 @@ body {
 }
 
 #jar {
-    width: 13%;
-    margin-left: 3%;
-    margin-right: 10%;
+    width: 12%;
+    margin-left: 2.5%;
+    margin-right: 11.5%;
     -moz-user-select: none;
     -webkit-user-select: none;
     user-select: none;
@@ -284,13 +284,13 @@ body {
 }
 
 #sendResponse {
-    padding-top: 5px;
-    padding-bottom: 2px;
+    padding-top: 0px;
+    padding-bottom: 0px;
 }
 
 #receiveResponse {
-    padding-top: 2px;
-    padding-bottom: 5px;
+    padding-top: 0px;
+    padding-bottom: 0px;
 }
 
 #waiting {
