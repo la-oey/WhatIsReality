@@ -4,25 +4,32 @@
 
 // TODO, Potentially: pick randomly between human/threePoints instructions.
 function pageLoad() {
-    clicksMap[startPage]();
-    //expt.cost = sample(expt.cost);
+    // expt.cost = sample(expt.cost);
+    expt.goal = sample(expt.goal);
     expt.cost = 'linear';
-    expt.costF = expt.cost == 'linear' ? uniformCost : linearCost;
-    if(expt.cost == 'linear'){
-        expt.costF = linearCost;
+    expt.costF = expt.cost == 'linear' ? linearCost : uniformCost;
+    // if(expt.cost == 'linear'){
         // let flipTxt = "Click each marble <b id='flipThresh' class='repflips'></b> time(s) to switch its color. ";
         // flipTxt += "You have <b id='clickCount' class='repflips'></b> clicks left.";
         // $('#sendText').append(flipTxt);
-    } else{
-        expt.costF = uniformCost;
-    }
+    // }
 
-    // flipProgress("red",2,10);
+    clicksMap[startPage]();
 }
 
 function clickConsent() {
     $('#consent').css('display','none');
     $('#instructions').css('display','block');
+    $('#instructGoal').html(expt.goal);
+    let exEst = expt.goal == "over" ? 48 : 42;
+    $('#exEst').html(exEst);
+    let instrCost = "";
+    if(expt.cost == 'linear') {
+        instrCost = "Click each marble to switch its color. The number of clicks needed to switch will go up with each marble.";
+    } else {
+        instrCost = "Click each marble once to switch its color."
+    }
+    $('#instructCost').html(instrCost);
     $('#instructPractice').html(expt.practiceTrials);
     $('#instructRounds').html(expt.trials);
 }
@@ -68,8 +75,14 @@ function sender() {
     $('#next').unbind("click");
     $('#next').bind("click", report);
     $('#sendResponse').css({'display':'block', 'opacity':0});
-    $('#progressInstr').css('display','block');
-    $('#progress').css('display','block');
+    
+    if(expt.cost == 'unif'){
+        $('#progressInstr').css('display','none');
+        $('#progress').css('display','none');
+    } else{
+        $('#progressInstr').css('display','block');
+        $('#progress').css('display','block');
+    }
 
     function drawingWait(){
         flickerWait("draw");
@@ -155,7 +168,21 @@ function toScoreboard(){
     $('.oppScore').html(expt.scoreTotal.opp);
 
     if(trial.exptPart == "practice"){
-        $('#calledBS').html(trial.callBStxt);
+        let practiceReport = "The marble-drawer's goal is to have the guesser " + expt.goal + "estimate. ";
+        practiceReport += "The true number of red marbles drawn was " + trial.marbles.drawn.red + ". ";
+        practiceReport += "The guess was " + trial.marbles.inferred.red + ", so the guesser ";
+        if(trial.marbles.inferred.red == trial.marbles.drawn.red){
+            practiceReport += "was accurate!";
+        } else {
+            if(trial.marbles.inferred.red > trial.marbles.drawn.red){
+                practiceReport += "over";
+            } else{
+                practiceReport += "under";
+            }
+            let err = Math.abs(trial.marbles.inferred.red - trial.marbles.drawn.red);
+            practiceReport += "estimated by " + err + "."
+        }
+        $('#scoreReport').html(practiceReport);
         $('#playerPts').html(scorePrefix(trial.score.player));
         $('#oppPts').html(scorePrefix(trial.score.opp));
         //$('.playerScore').html((expt.stat.playerTotalScore - trial.playerTrialScore) + " + " + trial.playerTrialScore + " = " + expt.stat.playerTotalScore);
@@ -163,6 +190,7 @@ function toScoreboard(){
     } else{
         $('#trialScoreboardDiv').hide();
     }
+    $('#scoreReport').hide();
 }
 
 function trialDone() {

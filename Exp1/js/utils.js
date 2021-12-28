@@ -63,6 +63,7 @@ function marble(container, color, size, locX, locY, idx, clickable, changeCost){
     d3.select(container)
     .append("circle")
     .attr("id","c"+idx)
+    .attr("class","c"+clickable)
     .attr("cx",locX)
     .attr("cy",locY)
     .attr("r",size)
@@ -256,7 +257,13 @@ function score(){
 
     let error = trial.marbles.inferred.red - trial.marbles.drawn.red;
     let scoreReceiver = -Math.abs(error);
-    let scoreSender = error <= 0 ? 0 : error; // if receiver underestimates, sender gets 0 pts
+
+    let scoreSender;
+    if(expt.goal == "over") { //sender's goal is overestimation
+        scoreSender = error <= 0 ? 0 : Math.abs(error); // if receiver underestimates, sender gets 0 pts
+    } else { //sender's goal is underestimation
+        scoreSender = error >= 0 ? 0 : Math.abs(error); // if receiver overestimates, sender gets 0 pts
+    }
     trial.score.player = trial.role == "sender" ? scoreSender : scoreReceiver;
     trial.score.opp = trial.role == "sender" ? scoreReceiver : scoreSender;
 
@@ -269,7 +276,7 @@ function restartTrial(){
     if(trial.role == "sender"){
         var roletxt = "marble-drawer";
     } else{
-        var roletxt = "responder";
+        var roletxt = "guesser";
     }
     $('.trialNum').html("Round " + (trial.trialNumber+1) + ": You are the <i>" + roletxt + "</i>");
     $('#urnsvg').empty();
@@ -347,6 +354,9 @@ function submitCatchText(){
     setTimeout(function(){
         if(trial.exptPart == 'practice' | (trial.trialNumber + 1) % 5 == 0){
             $('.scoreboardDiv').css('opacity','1');
+            if(trial.exptPart == 'practice'){
+                $('#scoreReport').show();
+            }
         }
         $('#nextScoreboard').css('opacity','1');
     }, timeoutTime);

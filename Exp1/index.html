@@ -71,6 +71,21 @@ TODO:
         Instructions for the game. Please read carefully.
     </p>
     <div>
+        <p>The goal of the game is to get as many points as possible, while keeping your opponent to as few points as possible.</p>
+
+        <p>In the game, there's an urn of 50% <b class='r'>red</b> and 50% <b class='b'>blue</b> marbles.</p>
+
+        <p>You will take turns playing each role: One player draws 
+        <b class='r'>1</b><b class='b'>0</b><b class='r'>0</b>
+        <b class='b'>m</b><b class='r'>a</b><b class='b'>r</b><b class='r'>b</b><b class='b'>l</b><b class='r'>e</b><b class='b'>s</b>
+         from the urn, and reports how many of each color to the other player. The other player then guesses how many <b class='r'>red</b> marbles were originally drawn. 
+        Here's how points work:</p>
+
+        <p class="indent"><b>The guesser wants to be accurate.</b> If they guess incorrectly, they lose points equal to how off their guess was. For example, if they guess <b>48</b> or <b>42</b> but the truth was <b>45</b>, the guesser loses 3 points. But if they guess correctly, they lose 0 points.</p>
+        <p class="indent"><b>The marble-drawer wants the guesser to <i id="instructGoal"></i>estimate.</b> If the guess is <b id="exEst"></b> but the truth was <b>45</b>, the marble-drawer gains 3 points. But the marble-drawer <i>doesn't gain any points if the guesser estimates in the wrong direction</i>.</p>
+
+        <p>The marble-drawer doesn't have to report the truth. They can change their report by manually clicking on marbles in the display. <b id="instructCost"></b> After, the marbles get shaken and the report is given to the guesser.</p>
+
     	<p>This is what a round looks like:</p>
     </div>
     <center><img src="img/InstructionImg.png" width="80%"></center><br>
@@ -135,7 +150,7 @@ TODO:
     </div>
     <br>
     <div id="scoreboard">
-    	<p class="scoreReport" id="calledBS"></p>
+    	<p id="scoreReport"></p>
         <div class="scoreboardDiv" id="trialScoreboardDiv">
             <div class="scoreCol"><b id="playerPts"></b></div>
             <div class="scoreCol"><b id="oppPts"></b></div>

@@ -9,6 +9,7 @@ var expt = {
     roles: ['sender','receiver'],
     cost: ['unif', 'linear'],
     costF: [uniformCost, linearCost],
+    goal: ['over','under'],
     catchTrials: [],
     scoreTotal: {
         player: 0,
@@ -18,7 +19,7 @@ var expt = {
     //     experiment_id: 1505,
     //     credit_token: ''
     // },
-    debug: true
+    debug: false
 };
 var trial = {
     exptPart: 'practice', //parts: {'practice','trial'}
@@ -65,4 +66,4 @@ var trial = {
 };
 var client = parseClient();
 var trialData = []; // store of all trials
-var startPage = "trial";
+var startPage = "practice";
