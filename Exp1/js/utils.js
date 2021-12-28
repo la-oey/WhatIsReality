@@ -56,6 +56,8 @@ function fillUrn(receiver=false) {
     flipProgress("gray", 5, 360, true);
 }
 
+var progressAnimTime = 500;
+
 function marble(container, color, size, locX, locY, idx, clickable, changeCost){
     d3.select(container)
     .append("circle")
@@ -70,9 +72,11 @@ function marble(container, color, size, locX, locY, idx, clickable, changeCost){
         if (!clickable) return;
 
         trial.numClicks += 1;
-        currentColor = d3.select(this).style("fill");
+        let m = d3.select(this);
+        currentColor = m.style("fill");
         let newColor = currentColor === "red" ? "blue" : "red";
-        d3.select(this).style("filter", "drop-shadow(0 0 8px black)");
+        
+        m.style("filter", "drop-shadow(0 0 8px black)");
 
         $('#progress').empty();
         if(trial.prevMarble != -1 && idx != trial.prevMarble) { // if user switches marble
@@ -106,14 +110,17 @@ function marble(container, color, size, locX, locY, idx, clickable, changeCost){
           trial.marbles.reported.red += 1;
           trial.marbles.reported.blue -= 1;
         }
-        d3.select(this).style("filter", "drop-shadow(0 0 0 black)");
 
         trial.numFlips += 1;
         trial.marbles.reported.array[idx] = newColor;
-        d3.select(this).style("fill", newColor);
-        $('#redRep').html(trial.marbles.reported.red);
-        $('#blueRep').html(trial.marbles.reported.blue);
-        flash('marbles');
+        setTimeout(function(){
+            m.style("filter", "drop-shadow(0 0 0 black)");
+            m.style("fill", newColor);
+            $('#redRep').html(trial.marbles.reported.red);
+            $('#blueRep').html(trial.marbles.reported.blue);
+            flash('marbles');
+        }, progressAnimTime);
+        
   });
 }
 
@@ -158,7 +165,7 @@ function flipProgress(color, count, total, static=false){
 
     function arcTween(){
         d3.select(this)
-            .transition().duration(500)
+            .transition().duration(progressAnimTime)
             .attrTween("d", tweenArc({ count: count, total: total}));
         d3.select("text")
             .style("visibility", "hidden");
