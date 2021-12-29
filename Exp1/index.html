@@ -71,24 +71,27 @@ TODO:
         Instructions for the game. Please read carefully.
     </p>
     <div>
-        <p>The goal of the game is to get as many points as possible, while keeping your opponent to as few points as possible.</p>
+        <p>The goal of the game is for you to get as many points as possible, while keeping your opponent to as few points as possible.</p>
 
-        <p>In the game, there's an urn of 50% <b class='r'>red</b> and 50% <b class='b'>blue</b> marbles.</p>
+        <p>In the game, there's a jar of 50% <b class='r'>red</b> and 50% <b class='b'>blue</b> marbles. You will play two different roles: the marble-drawer and the guesser.</p> 
 
-        <p>You will take turns playing each role: One player draws 
+        <p>In half the trials, you'll play as the <b>marble-drawer</b>. You'll sample 
         <b class='r'>1</b><b class='b'>0</b><b class='r'>0</b>
         <b class='b'>m</b><b class='r'>a</b><b class='b'>r</b><b class='r'>b</b><b class='b'>l</b><b class='r'>e</b><b class='b'>s</b>
-         from the urn, and reports how many of each color to the other player. The other player then guesses how many <b class='r'>red</b> marbles were originally drawn. 
-        Here's how points work:</p>
+        from the jar, and tell your opponent about how many of each color you got. <i>You don't need to tell the truth, nor does your opponent need to believe you.</i> Your opponent will then guess how many <b class='r'>red</b> marbles you <i>actually</i> drew from the jar.</p>
 
-        <p class="indent"><b>The guesser wants to be accurate.</b> If they guess incorrectly, they lose points equal to how off their guess was. For example, if they guess <b>48</b> or <b>42</b> but the truth was <b>45</b>, the guesser loses 3 points. But if they guess correctly, they lose 0 points.</p>
-        <p class="indent"><b>The marble-drawer wants the guesser to <i id="instructGoal"></i>estimate.</b> If the guess is <b id="exEst"></b> but the truth was <b>45</b>, the marble-drawer gains 3 points. But the marble-drawer <i>doesn't gain any points if the guesser estimates in the wrong direction</i>.</p>
+        <p> In the other trials, you'll play as the <b>guesser</b>. Your opponent will tell you how many marbles they supposedly drew, and then you'll guess how many <b class='r'>red</b> marbles were <i>actually</i> drawn.</p>
+        
+        <p>Here's how points work:</p>
 
-        <p>The marble-drawer doesn't have to report the truth. They can change their report by manually clicking on marbles in the display. <b id="instructCost"></b> After, the marbles get shaken and the report is given to the guesser.</p>
+        <p class="indent"><b>The guesser wants to be as accurate as possible.</b> If you guess incorrectly, you lose points equal to how off your guess was. For example, if you guess <b>48</b> or <b>42</b> but the truth was <b>45</b>, you lose 3 points. But if you guess correctly, you lose 0 points.</p>
+        <p class="indent"><b>The marble-drawer wants the opponent to <i id="instructGoal"></i>estimate by as much as possible.</b> If the opponent's guess is <b id="exEst"></b> but the truth was <b>45</b>, you gain 3 points. But you <i>don't gain any points if the opponent guesses in the wrong direction</i>.</p>
+
+        <p>Again, as the marble-drawer, you don't have to report the truth -- you can trick your opponent into misestimating by telling your opponent you have a different number of red and blue marbles than you actually do. To do this, you can manually click on marbles in the display. <b id="instructCost"></b> After, the marbles will get shaken before the report is given to the guesser.</p>
 
     	<p>This is what a round looks like:</p>
     </div>
-    <center><img src="img/InstructionImg.png" width="80%"></center><br>
+    <center><img src="https://experiments.evullab.org/marble-flip-1/img/instructionImg.png" width="80%"></center><br>
     <button class="big-button active-button" id="continueLead" onclick="clickInstructions();">Click here to continue</button>
 </div>
 

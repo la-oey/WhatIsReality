@@ -125,6 +125,14 @@ ul {
     margin: 0.5em 10% 0.5em 10%;
 }
 
+.r {
+    color: red;
+}
+
+.b {
+    color: blue;
+}
+
 .indent {
     margin: 0em 15% 0em 15%;
 }
@@ -243,6 +251,18 @@ body {
     height: 100%;
     width: 100%;
     background-color: white;
+}
+
+.ctrue {
+    cursor: pointer;
+}
+
+.ctrue:hover {
+    stroke: white;
+}
+
+.cfalse {
+    cursor: default;
 }
 
 #progressInstr {

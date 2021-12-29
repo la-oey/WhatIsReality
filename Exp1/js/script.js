@@ -25,7 +25,7 @@ function clickConsent() {
     $('#exEst').html(exEst);
     let instrCost = "";
     if(expt.cost == 'linear') {
-        instrCost = "Click each marble to switch its color. The number of clicks needed to switch will go up with each marble.";
+        instrCost = "Click each marble to switch its color. The more marbles you switch color, the more clicks you'll need to switch each marble.";
     } else {
         instrCost = "Click each marble once to switch its color."
     }

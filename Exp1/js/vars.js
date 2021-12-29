@@ -66,4 +66,4 @@ var trial = {
 };
 var client = parseClient();
 var trialData = []; // store of all trials
-var startPage = "practice";
+var startPage = "instruct";

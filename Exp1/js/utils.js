@@ -393,7 +393,7 @@ function catchTrial(role){
         $('#catchQ').before(catchInstructTxt);
     }
     if(role == 'sender'){
-        trial.catch.question = 'How many red marbles did you actually draw? ';
+        trial.catch.question = 'How many red marbles did you actually draw (before any changes)? ';
         trial.catch.key = trial.marbles.drawn.red;
     } else{
         trial.catch.question = 'How many red marbles did your opponent report drawing? ';
