@@ -13,6 +13,7 @@ function pageLoad() {
         // flipTxt += "You have <b id='clickCount' class='repflips'></b> clicks left.";
         // $('#sendText').append(flipTxt);
     // }
+    $('.instructGoal').text(expt.goal);
 
     clicksMap[startPage]();
 }
@@ -20,14 +21,13 @@ function pageLoad() {
 function clickConsent() {
     $('#consent').css('display','none');
     $('#instructions').css('display','block');
-    $('#instructGoal').html(expt.goal);
     let exEst = expt.goal == "over" ? 48 : 42;
     $('#exEst').html(exEst);
     let instrCost = "";
     if(expt.cost == 'linear') {
-        instrCost = "Click each marble to switch its color. The more marbles you switch color, the more clicks you'll need to switch each marble.";
+        instrCost = "Click on individual marbles to switch their color. The more marbles you switch color, the more clicks you'll need to switch each marble.";
     } else {
-        instrCost = "Click each marble once to switch its color."
+        instrCost = "Click on individual marbles once to switch their color."
     }
     $('#instructCost').html(instrCost);
     $('#instructPractice').html(expt.practiceTrials);
