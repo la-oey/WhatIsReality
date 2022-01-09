@@ -506,6 +506,29 @@ function factorial(x){
     }
 }
 
+function gamma(n){
+    return factorial(n-1);
+}
+
+function B(x, y){
+    return gamma(x)*gamma(y) / gamma(x+y);
+}
+
+function betabinom(alpha, beta, n, k){
+    return (factorial(n)/(factorial(k)*factorial(n-k))) * B(k+alpha, n-k+beta) / B(alpha, beta);
+}
+
+function rbetabinom(alpha, beta, n){
+    let p = Math.random();
+    let i = -1;
+    let cumul = 0;
+    while(cumul < p & i <= n){
+        i += 1;
+        cumul += betabinom(alpha, beta, n, i);
+    }
+    return i;
+}
+
 function cbinom(n, p, k){
     if(k == 0){
         return binom(n, p, 0);
