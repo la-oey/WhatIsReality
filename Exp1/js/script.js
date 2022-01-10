@@ -69,7 +69,6 @@ function clickPostPractice(){
 
 function sender() {
     restartTrial();
-    $('#trialInstruct').html("<p class='instructText'><br></p>");
     $('#next').html("Report!");
     $('#next').prop('disabled',true);
     $('#next').unbind("click");
@@ -93,8 +92,6 @@ function sender() {
 
             $('#waiting').css('opacity',0);
             fillUrn();
-            var marbleInstruct = "<p class='instructText'>You drew 100 marbles. Click on marbles to switch their color.</p>";
-            $('#trialInstruct').html(marbleInstruct);
             trial.marbles.reported.red = trial.marbles.drawn.red;
             trial.marbles.reported.blue = trial.marbles.drawn.blue;
             $('#redRep').html(trial.marbles.reported.red);
@@ -117,7 +114,6 @@ function receiver() {
     $('#next').unbind("click");
     $('#next').bind("click", submitTrial);
 
-    $('#trialInstruct').html("<p class='instructText'><br></p>");
     $('#receiveResponse').css({'display':'block', 'opacity':0});
     $('#progressInstr').css('display','none');
     $('#progress').css('display','none');

@@ -19,7 +19,7 @@ var expt = {
     //     experiment_id: 1505,
     //     credit_token: ''
     // },
-    debug: false
+    debug: true
 };
 var trial = {
     exptPart: 'practice', //parts: {'practice','trial'}
@@ -66,4 +66,6 @@ var trial = {
 };
 var client = parseClient();
 var trialData = []; // store of all trials
-var startPage = "instruct";
+var startPage = "practice";
+var alphabeta = 3;
+var lambdaAI = 10;

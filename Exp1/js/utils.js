@@ -16,7 +16,7 @@ function fillUrn(receiver=false) {
     if(!receiver){
         trial.prevMarble = -1; //reset prev marble clicked
         trial.flipThresh = 1; //restarts flipping threshold
-        trial.marbles.drawn.red = getK(expt.marblesSampled, expt.probRed, Math.random());
+        trial.marbles.drawn.red = rbetabinom(alphabeta, alphabeta, expt.marblesSampled);
         var urnRed = trial.marbles.drawn.red;
         trial.marbles.drawn.blue = expt.marblesSampled - urnRed;
         var urnBlue = trial.marbles.drawn.blue;
@@ -209,21 +209,15 @@ function report(){
 
 function computerDraw(){
     // groundTruth
-    trial.marbles.drawn.red = getK(expt.marblesSampled, expt.probRed);
+    trial.marbles.drawn.red = rbetabinom(alphabeta, alphabeta, expt.marblesSampled);
     trial.marbles.drawn.blue = expt.marblesSampled - trial.marbles.drawn.red;
 
-    // internalSample
-    let lie = getK(expt.marblesSampled, expt.probRed); //detector's belief about the distribution
-    trial.compSample = lie;
-    // debugLog("truth: " + trial.marbles.drawn.red);
-    // debugLog("lie: " + lie);
-    if(lie <= trial.marbles.drawn.red){
-        trial.marbles.reported.red = trial.marbles.drawn.red;
-        trial.marbles.reported.blue = trial.marbles.drawn.blue;
-    } else{
-        trial.marbles.reported.red = lie;
-        trial.marbles.reported.blue = expt.marblesSampled - lie;
+    if(expt.goal == 'over'){ //overreport
+        trial.marbles.reported.red = Math.min(trial.marbles.drawn.red + rpoisson(lambdaAI), expt.marblesSampled);
+    } else{ //underreport
+        trial.marbles.reported.red = Math.max(trial.marbles.drawn.red - rpoisson(lambdaAI), 0);
     }
+    trial.marbles.reported.blue = expt.marblesSampled - trial.marbles.reported.red;
 }
 
 function computerInfer(){
@@ -506,6 +500,14 @@ function factorial(x){
     }
 }
 
+function cbinom(n, p, k){
+    if(k == 0){
+        return binom(n, p, 0);
+    } else{
+        return binom(n, p, k) + cbinom(n, p, k-1);
+    }
+}
+
 function gamma(n){
     return factorial(n-1);
 }
@@ -529,12 +531,19 @@ function rbetabinom(alpha, beta, n){
     return i;
 }
 
-function cbinom(n, p, k){
-    if(k == 0){
-        return binom(n, p, 0);
-    } else{
-        return binom(n, p, k) + cbinom(n, p, k-1);
+function poisson(lambda, k){
+    return lambda**k * Math.E**-lambda / factorial(k);
+}
+
+function rpoisson(lambda){
+    let p = Math.random();
+    let i = -1;
+    let cumul = 0;
+    while(cumul < p){
+        i += 1;
+        cumul += poisson(lambda, i);
     }
+    return i;
 }
 
 function getK(n, p){
