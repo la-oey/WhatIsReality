@@ -1,10 +1,11 @@
 // experiment settings
 var expt = {
     saveURL: 'submit.simple.php',
-    trials: 100,
+    trials: 20,
     practiceTrials: 2, //how many practice trials //switch to 4
     marblesSampled: 100, //total number of marbles drawn per trial
     probRed: 0.5,
+    lambdaAI: [2,4,8,16],
     roleFirst: 'sender', //roles: {'sender','receiver'}
     roles: ['sender','receiver'],
     cost: ['unif', 'linear'],
@@ -15,11 +16,11 @@ var expt = {
         player: 0,
         opp: 0
     },
-    // sona: {
-    //     experiment_id: 1505,
-    //     credit_token: ''
-    // },
-    debug: true
+    sona: {
+        experiment_id: 2228,
+        credit_token: 'b315147ae43241ea9c65086cb510cfb7'
+    },
+    debug: false
 };
 var trial = {
     exptPart: 'practice', //parts: {'practice','trial'}
@@ -66,6 +67,5 @@ var trial = {
 };
 var client = parseClient();
 var trialData = []; // store of all trials
-var startPage = "practice";
+var startPage = "consent";
 var alphabeta = 3;
-var lambdaAI = 10;

@@ -213,25 +213,20 @@ function computerDraw(){
     trial.marbles.drawn.blue = expt.marblesSampled - trial.marbles.drawn.red;
 
     if(expt.goal == 'over'){ //overreport
-        trial.marbles.reported.red = Math.min(trial.marbles.drawn.red + rpoisson(lambdaAI), expt.marblesSampled);
+        trial.marbles.reported.red = Math.min(trial.marbles.drawn.red + rpoisson(expt.lambdaAI), expt.marblesSampled);
     } else{ //underreport
-        trial.marbles.reported.red = Math.max(trial.marbles.drawn.red - rpoisson(lambdaAI), 0);
+        trial.marbles.reported.red = Math.max(trial.marbles.drawn.red - rpoisson(expt.lambdaAI), 0);
     }
     trial.marbles.reported.blue = expt.marblesSampled - trial.marbles.reported.red;
 }
 
 function computerInfer(){
-    let sample = getK(expt.marblesSampled, expt.probRed); //detector's belief about the distribution
-    trial.compSample = sample;
-    debugLog("sample: " + sample);
-    if(sample > trial.marbles.reported.red){
-        trial.marbles.inferred.red = trial.marbles.reported.red;
-        trial.marbles.inferred.blue = trial.marbles.reported.blue;
+    if(expt.goal == 'over'){
+        trial.marbles.inferred.red = Math.max(trial.marbles.reported.red - rpoisson(expt.lambdaAI), 0);
     } else{
-        trial.marbles.inferred.red = sample;
-        trial.marbles.inferred.blue = expt.marblesSampled - sample;
+        trial.marbles.inferred.red = Math.min(trial.marbles.reported.red + rpoisson(expt.lambdaAI), 100)
     }
-    // debugLog("computer's guess: " + trial.marbles.inferred.red);
+    trial.marbles.inferred.blue = expt.marblesSampled - trial.marbles.inferred.red;
 }
 
 function submitTrial(){
@@ -456,6 +451,7 @@ function recordData(){
         roleCurrent: trial.role,
         marblesSampled: expt.marblesSampled,
         probRed: expt.probRed,
+        lambda: expt.lambdaAI,
         drawnRed: trial.marbles.drawn.red,
         reportedRed: trial.marbles.reported.red,
         inferredRed: trial.marbles.inferred.red,
@@ -465,11 +461,10 @@ function recordData(){
         oppTotalScore: expt.scoreTotal.opp,
         waitTime: trial.time.wait,
         responseTime: trial.time.response,
-        // catchQuestion: trial.catch.question,
-        // catchKey: trial.catch.key,
-        // catchResponse: trial.catch.response,
-        // catchResponseTime: trial.catch.responseTime,
-        // pseudoRound: trial.pseudoRound,
+        catchQuestion: trial.catch.question,
+        catchKey: trial.catch.key,
+        catchResponse: trial.catch.response,
+        catchTime: trial.catch.time,
         trialTime: trial.time.trial
     })
 }

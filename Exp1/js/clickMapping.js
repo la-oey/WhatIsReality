@@ -3,5 +3,8 @@ var clicksMap = {
 	"instruct": clickConsent,
 	"prePractice": clickInstructions,
 	"practice": clickPrePractice,
-	"trial": clickPostPractice
+	"trial": clickPostPractice,
+	"winner": function(){$('#winner').css('display','block')},
+	"postQs": clickWinner,
+	"completed": clickQs
 }

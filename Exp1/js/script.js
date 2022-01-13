@@ -4,15 +4,10 @@
 
 // TODO, Potentially: pick randomly between human/threePoints instructions.
 function pageLoad() {
-    // expt.cost = sample(expt.cost);
+    expt.cost = sample(expt.cost);
     expt.goal = sample(expt.goal);
-    expt.cost = 'linear';
+    expt.lambdaAI = sample(expt.lambdaAI);
     expt.costF = expt.cost == 'linear' ? linearCost : uniformCost;
-    // if(expt.cost == 'linear'){
-        // let flipTxt = "Click each marble <b id='flipThresh' class='repflips'></b> time(s) to switch its color. ";
-        // flipTxt += "You have <b id='clickCount' class='repflips'></b> clicks left.";
-        // $('#sendText').append(flipTxt);
-    // }
     $('.instructGoal').text(expt.goal);
 
     clicksMap[startPage]();
@@ -23,11 +18,9 @@ function clickConsent() {
     $('#instructions').css('display','block');
     let exEst = expt.goal == "over" ? 48 : 42;
     $('#exEst').html(exEst);
-    let instrCost = "";
+    let instrCost = "Click on individual marbles to switch their color.";
     if(expt.cost == 'linear') {
-        instrCost = "Click on individual marbles to switch their color. The more marbles you switch color, the more clicks you'll need to switch each marble.";
-    } else {
-        instrCost = "Click on individual marbles once to switch their color."
+        instrCost += " The more marbles you switch color, the more clicks you'll need to switch each marble.";
     }
     $('#instructCost').html(instrCost);
     $('#instructPractice').html(expt.practiceTrials);
@@ -54,8 +47,11 @@ function clickPostPractice(){
 
     expt.catchTrials = distributeChecks(expt.trials, 1); // 0.1 of expt trials have an attention check
     //expt.pseudo = distributePseudo(expt.trials, 0, 10);
+
+    expt.scoreTotal.player = 0;
+    expt.scoreTotal.opp = 0;
     
-    // expt.roleFirst = sample(expt.roles); // REMOVE LATER
+    expt.roleFirst = sample(expt.roles);
     trial.role = expt.roleFirst;
     if(trial.role == 'sender'){
         sender();
@@ -181,8 +177,6 @@ function toScoreboard(){
         $('#scoreReport').html(practiceReport);
         $('#playerPts').html(scorePrefix(trial.score.player));
         $('#oppPts').html(scorePrefix(trial.score.opp));
-        //$('.playerScore').html((expt.stat.playerTotalScore - trial.playerTrialScore) + " + " + trial.playerTrialScore + " = " + expt.stat.playerTotalScore);
-        //$('.oppScore').html((expt.stat.oppTotalScore - trial.oppTrialScore) + " + " + trial.oppTrialScore + " = " + expt.stat.oppTotalScore);
     } else{
         $('#trialScoreboardDiv').hide();
     }
@@ -202,13 +196,15 @@ function trialDone() {
         $('#trial').css('display','none');
         $('#postPractice').css('display','block');
     } else if(trial.trialNumber >= expt.trials){
-        // if(expt.stat.playerTotalScore == expt.stat.oppTotalScore){
-        //     $('#whowon').html("You and your opponent tied!");
-        // } else if(expt.stat.playerTotalScore > expt.stat.oppTotalScore){
-        //     $('#whowon').html("You won!");
-        // } else{
-        //     $('#whowon').html("Your opponent won!");
-        // }
+        $('.playerScore').html(scorePrefix(expt.scoreTotal.player));
+        $('.oppScore').html(scorePrefix(expt.scoreTotal.opp));
+        if(expt.scoreTotal.player == expt.scoreTotal.opp){
+            $('#whowon').html("You and your opponent tied!");
+        } else if(expt.scoreTotal.player > expt.scoreTotal.opp){
+            $('#whowon').html("You won!");
+        } else{
+            $('#whowon').html("Your opponent won!");
+        }
 
         $('.scoreboardDiv').show();
 
@@ -216,7 +212,7 @@ function trialDone() {
         data = {client: client, expt: expt, trials: trialData};
         writeServer(data);
 
-        $('#completed').css('display','block');
+        $('#winner').css('display','block');
     } else {
         if(trial.role == 'sender'){
             trial.role = 'receiver';
@@ -228,6 +224,17 @@ function trialDone() {
     }
 }
 
+function clickWinner() {
+    $('#winner').css('display','none');
+    $('#postquestions').css('display','block');
+    $('#continueQs').prop('disabled',true);
+    showQuestions();
+}
+
+function clickQs() {
+    $('#postquestions').css('display','none');
+    $('#completed').css('display','block');
+}
 
 function experimentDone() {
     submitExternal(client);

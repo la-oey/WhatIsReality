@@ -22,7 +22,8 @@ TODO:
     <script type="text/javascript" src='js/utils.js'></script>
     <script type="text/javascript" src='js/vars.js'></script>
     <script type="text/javascript" src='js/clickMapping.js'></script>
-
+    <script type="text/javascript" src='js/posttestQs.js'></script>
+    <script type="text/javascript" src='js/questions.js'></script>
 </head>
 
 
@@ -37,7 +38,7 @@ TODO:
         <b>PROCEDURES.</b> If you agree to participate in this study, the following will happen to you:<br></p>
     <p style="margin-left: 15%; margin-right: 15%">
         1. You will sit at the computer and play a game.<br>
-        2. Try to get the highest score you can.<br><br>
+        2. Try to get the highest score you can.<br>
     </p>
     <p>
         <b>RISKS</b>. No potential risks or discomforts are anticipated except for the possibility that some tasks may
@@ -92,7 +93,7 @@ TODO:
     	<p>This is what a round looks like:</p>
     </div>
     <center><img src="https://experiments.evullab.org/marble-flip-1/img/instructionImg.png" width="80%"></center><br>
-    <button class="big-button active-button" id="continueLead" onclick="clickInstructions();">Click here to continue</button>
+    <button class="big-button active-button" id="continueInstruct" onclick="clickInstructions();">Click here to continue</button>
 </div>
 
 
@@ -100,7 +101,7 @@ TODO:
     <p class="mtitle">
         First, you'll have <b id="instructPractice"></b> practice rounds.
     </p>
-    <button class="big-button active-button" id="continueLead" onclick="clickPrePractice();">Click here to continue</button>
+    <button class="big-button active-button" id="continuePractice" onclick="clickPrePractice();">Click here to continue</button>
 </div>
 
 <div id="postPractice" class="screen">
@@ -110,7 +111,7 @@ TODO:
     <div>
        <p>Next, you and your opponent will play <b id="instructRounds"></b> rounds. Good luck!</p>
     </div>
-    <button class="big-button active-button" id="continueLead" onclick="clickPostPractice();">Click here to continue</button>
+    <button class="big-button active-button" id="continueTrial" onclick="clickPostPractice();">Click here to continue</button>
 </div>
 
 <div id="trial" class="screen">
@@ -127,8 +128,8 @@ TODO:
     <br>
     <div id="sendResponse" class="trialText">
         <p id="sendText" class='instructText'>
-            You drew 100 marbles. Click on marbles to switch their color.
-            <br>You want your opponent to <i class="instructGoal"></i>estimate <b class='r'>red</b> marbles.<br><br>
+            You drew 100 marbles. Click on marbles to switch their color.<br><br>
+            You want your opponent to <i class="instructGoal"></i>estimate <b class='r'>red</b> marbles.<br><br>
             You have <b id='redRep' class='repmarbles'></b> <b class='r'>red</b> marbles and
             your opponent has <b id='blueRep' class='repmarbles'></b> <b class='b'>blue</b> marbles.<br><br>
         </p>
@@ -169,46 +170,25 @@ TODO:
 </div>
 
 
-<div id="completed" class="screen">
+<div id="winner" class="screen">
     <center><h1>Scoreboard</h1></center>
     <div class="scoreboardDiv">
         <div class="scoreCol">Your Score:<br><b class="playerScore">0</b></div>
         <div class="scoreCol">Opponent's Score:<br><b class="oppScore">0</b></div>
     </div>
     <p class="mtitle" id="whowon"></p>
-    <div id="statsBox">
-        <center><h3>Your Stats</h3></center>
-        <p>
-            You told the truth: <b id="stat_truth"></b>
-        </p><br>
-        <p class="indent">
-            Your opponent accepted your reported value: <b id="stat_truth_noBS"></b><br>
-            Your opponent rejected but you told the truth: <b id="stat_truth_BS"></b><br>
-        </p>
-        <p>
-            You lied: <b id="stat_lie"></b>
-        </p><br>
-        <p class="indent">
-            Your opponent accepted, but you lied: <b id="stat_lie_noBS"></b><br>
-            Your opponent caught you lying: <b id="stat_lie_BS"></b><br>
-        </p>
-        <br><br>
-        <p>
-            You accepted your opponent's report: <b id="stat_noBS"></b>
-        </p><br>
-        <p class="indent">
-            You accepted and your opponent told the truth: <b id="stat_noBS_truth"></b><br>
-            You accepted and your opponent lied: <b id="stat_noBS_lie"></b><br>
-        </p>
-        <p>
-            You rejected your opponent's report: <b id="stat_BS"></b>
-        </p><br>
-        <p class="indent">
-            You rejected but your opponent told the truth: <b id="stat_BS_truth"></b><br>
-            You rejected and your opponent lied: <b id="stat_BS_lie"></b><br>
-        </p>
+    <button class="big-button active-button" id="continueWinner" onclick="clickWinner();">Continue</button>
+</div>
 
-    </div>
+<div id="postquestions" class="screen">
+    <p class="mtitle trialNum">Just a few more questions</p><br>
+    <center>
+        <div id="posttestSurvey"></div><br><br>
+    </center>
+    <button class="big-button active-button" id="continueQs" onclick="clickQs();">Continue</button>
+</div>
+
+<div id="completed" class="screen">
     <p class="mtitle">Thank you for your participation!</p>
     <button class="big-button active-button" id="finished" onclick="experimentDone();">Finished!</button>
 </div>
