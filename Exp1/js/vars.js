@@ -20,6 +20,7 @@ var expt = {
         experiment_id: 2228,
         credit_token: 'b315147ae43241ea9c65086cb510cfb7'
     },
+    pilot: true,
     debug: false
 };
 var trial = {

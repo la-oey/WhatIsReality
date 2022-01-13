@@ -226,9 +226,13 @@ function trialDone() {
 
 function clickWinner() {
     $('#winner').css('display','none');
-    $('#postquestions').css('display','block');
-    $('#continueQs').prop('disabled',true);
-    showQuestions();
+    if(pilot){
+        $('#postquestions').css('display','block');
+        $('#continueQs').prop('disabled',true);
+        showQuestions();
+    } else{
+        $('#completed').css('display','block'); //if not pilot, skip ahead to end
+    }
 }
 
 function clickQs() {
