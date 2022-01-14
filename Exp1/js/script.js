@@ -45,7 +45,7 @@ function clickPrePractice(){
 function clickPostPractice(){
     $('#postPractice').css('display','none');
 
-    expt.catchTrials = distributeChecks(expt.trials, 1); // 0.1 of expt trials have an attention check
+    expt.catchTrials = distributeChecks(expt.trials, 0.1); // 0.1 of expt trials have an attention check
     //expt.pseudo = distributePseudo(expt.trials, 0, 10);
 
     expt.scoreTotal.player = 0;
@@ -149,7 +149,7 @@ function toScoreboard(){
     trial.catch.time = Date.now();
     if(expt.catchTrials.includes(trial.trialNumber)){
         $('#catchQ').show();
-        catchTrial(trial.role, trial.exptPart);
+        catchTrial(trial.role);
     } else if(trial.exptPart == 'trial' & (trial.trialNumber + 1) % 5 != 0){
         $('#totalScoreboardDiv').css('opacity',0);
     } else{
@@ -189,6 +189,7 @@ function trialDone() {
     trial.trialTime = Date.now() - trial.startTime;
     trial.trialNumber += 1;
     recordData();
+    
 
     if(trial.exptPart == "practice" & trial.trialNumber >= expt.practiceTrials){
         trial.trialNumber = 0;
@@ -206,10 +207,7 @@ function trialDone() {
             $('#whowon').html("Your opponent won!");
         }
 
-        $('.scoreboardDiv').show();
-
-        // expt done
-        
+        $('#finalScoreboardDiv').css('opacity',1);
 
         $('#winner').css('display','block');
     } else {
@@ -222,8 +220,6 @@ function trialDone() {
         }
     }
 
-    data = {client: client, expt: expt, trials: trialData};
-    writeServer(data);
 }
 
 function clickWinner() {
@@ -238,10 +234,13 @@ function clickWinner() {
 }
 
 function clickQs() {
+    submitPosttest();
     $('#postquestions').css('display','none');
     $('#completed').css('display','block');
 }
 
 function experimentDone() {
+    data = {client: client, expt: expt, trials: trialData};
+    writeServer(data);
     submitExternal(client);
 }

@@ -1,7 +1,7 @@
 // experiment settings
 var expt = {
     saveURL: 'submit.simple.php',
-    trials: 10,
+    trials: 100,
     practiceTrials: 2, //how many practice trials //switch to 4
     marblesSampled: 100, //total number of marbles drawn per trial
     probRed: 0.5,
@@ -20,7 +20,7 @@ var expt = {
         experiment_id: 2228,
         credit_token: 'b315147ae43241ea9c65086cb510cfb7'
     },
-    pilot: true,
+    pilot: false,
     debug: false
 };
 var trial = {

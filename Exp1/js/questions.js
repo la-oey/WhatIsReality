@@ -57,8 +57,6 @@ function submitPosttest(){
 		}
 	}
 	client.posttest = postResponse;
-	saveData();
-	return(checkResponse);
 }
 
 

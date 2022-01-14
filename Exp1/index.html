@@ -153,7 +153,7 @@ TODO:
         <img id="catchFeedback" height=18 vertical-align="middle" hspace="20">
     </div>
     <br>
-    <div id="scoreboard">
+    <div>
     	<p id="scoreReport"></p>
         <div class="scoreboardDiv" id="trialScoreboardDiv">
             <div class="scoreCol"><b id="playerPts"></b></div>
@@ -172,10 +172,10 @@ TODO:
 
 <div id="winner" class="screen">
     <center><h1>Scoreboard</h1></center>
-    <div class="scoreboardDiv">
+    <div class="scoreboardDiv" id="finalScoreboardDiv">
         <div class="scoreCol">Your Score:<br><b class="playerScore">0</b></div>
         <div class="scoreCol">Opponent's Score:<br><b class="oppScore">0</b></div>
-    </div>
+    </div><br>
     <p class="mtitle" id="whowon"></p>
     <button class="big-button active-button" id="continueWinner" onclick="clickWinner();">Continue</button>
 </div>

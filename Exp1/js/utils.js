@@ -227,7 +227,7 @@ function submitTrial(){
     trial.time.response = Date.now() - trial.time.start;
     $('#trial').css('display','none');
     score();
-    if(trial.exptPart == 'practice' | (trial.exptPart == 'trial' & (trial.trialNumber + 1) % 5 == 0)){
+    if(trial.exptPart == 'practice' | (trial.exptPart == 'trial' & (trial.trialNumber + 1) % 5 == 0) | expt.catchTrials.includes(trial.trialNumber)){
         toScoreboard();
     } else{
         trialDone();
@@ -376,10 +376,10 @@ function catchTrial(role){
         $('#catchQ').before(catchInstructTxt);
     }
     if(role == 'sender'){
-        trial.catch.question = 'How many red marbles did you actually draw (before any changes)? ';
+        trial.catch.question = 'How many <b class="r">red</b> marbles did you actually draw (before any changes)? ';
         trial.catch.key = trial.marbles.drawn.red;
     } else{
-        trial.catch.question = 'How many red marbles did your opponent report drawing? ';
+        trial.catch.question = 'How many <b class="r">red</b> marbles did your opponent report drawing? ';
         trial.catch.key = trial.marbles.reported.red;
     }
     $('#catchQlab').html(trial.catch.question);
