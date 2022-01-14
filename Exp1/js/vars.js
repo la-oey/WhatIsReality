@@ -1,11 +1,11 @@
 // experiment settings
 var expt = {
     saveURL: 'submit.simple.php',
-    trials: 20,
+    trials: 10,
     practiceTrials: 2, //how many practice trials //switch to 4
     marblesSampled: 100, //total number of marbles drawn per trial
     probRed: 0.5,
-    lambdaAI: [2,4,8,16],
+    lambdaAI: 5, //[2,4,8,16],
     roleFirst: 'sender', //roles: {'sender','receiver'}
     roles: ['sender','receiver'],
     cost: ['unif', 'linear'],
@@ -47,8 +47,7 @@ var trial = {
         inferred: {
             red: 0,
             blue: 0
-        },
-        compSample: 0
+        }
     },
     catch: {
         question: '',

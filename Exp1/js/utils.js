@@ -85,24 +85,18 @@ function marble(container, color, size, locX, locY, idx, clickable, changeCost){
             trial.numClicks = 1;
             d3.select("#c"+trial.prevMarble).style("filter","drop-shadow(0 0 0 black)");
             trial.prevMarble = idx;
-            $('#clickCount').html(trial.flipThresh - trial.numClicks);
-            // flash('flips'); //indicate number change by flashing number
             flipProgress(newColor, trial.numClicks, trial.flipThresh);
             return;
         }
         trial.prevMarble = idx;
         if (trial.numClicks < trial.flipThresh) {
-          $('#clickCount').html(trial.flipThresh - trial.numClicks);
-          // flash('flips'); //indicate number change by flashing number
           flipProgress(newColor, trial.numClicks, trial.flipThresh);
           return;
         } else {
           flipProgress(newColor, trial.numClicks, trial.flipThresh);
           changeCost();
-          $('#flipThresh').html(trial.flipThresh);
           trial.numClicks = 0;
           trial.prevMarble = -1;
-          $('#clickCount').html(trial.flipThresh - trial.numClicks);
         }
 
         if (currentColor === "red") {

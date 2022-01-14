@@ -6,7 +6,7 @@
 function pageLoad() {
     expt.cost = sample(expt.cost);
     expt.goal = sample(expt.goal);
-    expt.lambdaAI = sample(expt.lambdaAI);
+    // expt.lambdaAI = sample(expt.lambdaAI);
     expt.costF = expt.cost == 'linear' ? linearCost : uniformCost;
     $('.instructGoal').text(expt.goal);
 
@@ -17,7 +17,7 @@ function clickConsent() {
     $('#consent').css('display','none');
     $('#instructions').css('display','block');
     let exEst = expt.goal == "over" ? 48 : 42;
-    $('#exEst').html(exEst);
+    $('.exEst').html(exEst);
     let instrCost = "Click on individual marbles to switch their color.";
     if(expt.cost == 'linear') {
         instrCost += " The more marbles you switch color, the more clicks you'll need to switch each marble.";
@@ -88,12 +88,12 @@ function sender() {
 
             $('#waiting').css('opacity',0);
             fillUrn();
+            $('#redDraw').html(trial.marbles.drawn.red);
+            $('#blueDraw').html(trial.marbles.drawn.blue);
             trial.marbles.reported.red = trial.marbles.drawn.red;
             trial.marbles.reported.blue = trial.marbles.drawn.blue;
             $('#redRep').html(trial.marbles.reported.red);
             $('#blueRep').html(trial.marbles.reported.blue);
-            $('#flipThresh').html(trial.flipThresh);
-            $('#clickCount').html(trial.flipThresh - trial.numClicks);
             $('#sendResponse').css('opacity',1);
             $('#next').prop('disabled',false);
             trial.responseStartTime = Date.now();
@@ -209,8 +209,7 @@ function trialDone() {
         $('.scoreboardDiv').show();
 
         // expt done
-        data = {client: client, expt: expt, trials: trialData};
-        writeServer(data);
+        
 
         $('#winner').css('display','block');
     } else {
@@ -222,11 +221,14 @@ function trialDone() {
             sender();
         }
     }
+
+    data = {client: client, expt: expt, trials: trialData};
+    writeServer(data);
 }
 
 function clickWinner() {
     $('#winner').css('display','none');
-    if(pilot){
+    if(expt.pilot){
         $('#postquestions').css('display','block');
         $('#continueQs').prop('disabled',true);
         showQuestions();
