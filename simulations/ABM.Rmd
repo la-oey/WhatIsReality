@@ -9,14 +9,15 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
+library(cowplot)
 library(extraDistr)
 ```
 
 ## Variables
 
 ```{r}
-ALPH = 10
-ns = seq(0,1,0.1)
+alph = 40
+ns = seq(0,1,0.02)
 n = length(ns)
 alph.bet = 3
 ```
@@ -42,26 +43,26 @@ softmax <- function(alph, allEV) { ## allEV = vector of numerics
 
 ### Figure Generator
 ```{r}
-fig <- function(mat, labx, laby) {
+fig <- function(mat, labx, laby, title) {
   mat %>%
     as_tibble() %>%
     mutate(ky = ns) %>%
     pivot_longer(-ky, names_to = 'kx', values_to='probability') %>%
-    mutate(kx = (as.numeric(substr(kx, 2, 10))-1) / 10) %>%
+    mutate(kx = (as.numeric(substr(kx, 2, (n-1)))-1) / (n-1)) %>%
     ggplot(aes(x=kx, y=ky, fill=probability)) +
     geom_tile(size=0.5) +
+    ggtitle(title) +
     scale_x_continuous(labx, expand=c(0,0)) +
     scale_y_continuous(laby, expand=c(0,0)) +
-    scale_fill_gradient(low="white", high="blue")
-    # scale_fill_gradient2(low="white", mid="darkorchid", high="blue", midpoint=0.5,
-    #                    limits=c(0,1), labels=c("0%","25%","50%","75%","100%"))
+    # scale_fill_gradient(low="white", high="blue")
+    scale_fill_gradient2(low="white", mid="darkorchid", high="blue", midpoint=0.5,
+                       limits=c(0,1), labels=c("0%","25%","50%","75%","100%"))
 }
 ```
 
 ### Priors
 ```{r}
-p.k <- function(){
-  prior = "u"
+p.k <- function(prior = "u"){
   if(prior == "u") {
     matrix(rep(1/n, each=n*n), nrow=n)
   } else if(prior == "b") {
@@ -76,13 +77,12 @@ p.k <- function(){
 ```{r}
 # sender's utility
 # util = {1 = overestimate, 0 = honest, -1 = underestimate}
-u.S <- function(k, kest, util, cost){ 
+u.S <- function(k, kest, util, cost){
   util * kest - cost * (kest - k)^2
 }
 
-t(matrix(u.S(rep(seq(0,1,0.1), 11), rep(seq(0,1,0.1),each=11), 1, 1), nrow=11)) #x(rows) = kest, y(cols) = k
-t(matrix(u.S(rep(seq(0,1,0.1), 11), rep(seq(0,1,0.1),each=11), 1, 0), nrow=11))
-t(matrix(u.S(rep(seq(0,1,0.1), 11), rep(seq(0,1,0.1),each=11), 0, 1), nrow=11))
+# t(matrix(u.S(rep(seq(0,1,0.1), 11), rep(seq(0,1,0.1),each=11), 1, 1), nrow=11)) #x(rows) = kest, y(cols) = k
+
 # receiver's utility
 u.R <- function(k, kest){
   -(kest - k)^2
@@ -91,172 +91,99 @@ u.R <- function(k, kest){
 # t(matrix(u.R(rep(seq(0,1,0.1), 11), rep(seq(0,1,0.1),each=11)), nrow=11))
 ```
 
-## L0 Receiver P(kest|ksay)
+
+
+
+
 ```{r}
-p.L0R_kest <- function() {
+## Receiver0 P(kest|ksay)
+r.0 <- function() {
   diag(n)
 }
 
-fig(p.L0R_kest(), "ksay", "kest")
-```
-
-## Sender
-
-```{r}
-sender = function(util, cost, p.R.kest_ksay){
-  arr.pR <- aperm(array(rep(p.R.kest_ksay, each=n), dim=c(n,n,n)), c(2,1,3))
+## Sender P(ksay|k)
+sender = function(util, cost, p.R.kest_ksay){ #x(rows) = ksay, y(cols) = k, z(list) = kest
+  arr.pR <- aperm(array(rep(p.R.kest_ksay, each=n), dim=c(n,n,n)), c(2,1,3)) 
   arr.uS <- aperm(array(rep(mapply(function(i) u.S(i, ns, util, cost), ns), each=n), dim=c(n,n,n)), c(1,3,2))
   EV = apply(arr.uS * arr.pR, MARGIN=c(1,2), FUN=sum)
-  apply(EV, MARGIN=2, softmax, alph)
+  apply(EV, MARGIN=2, softmax, alph) # listsums -> 2D arr, x(rows) = ksay, y(cols) = k
 }
 
-receiver = function(p.S.ksay_k){
-  p.S.k_ksay <- p.S.ksay_k / rowSums(p.S.ksay_k)
-  arr.pS <- array(rep(p.S.k_ksay, n), dim=c(n,n,n)) # p(k|ksay)?
+## Receiver P(kest|ksay)
+receiver = function(p.S.ksay_k){ #x(rows) = ksay, y(cols) = k, z(list) = kest
+  p.S.k_ksay <- p.S.ksay_k / rowSums(p.S.ksay_k) # p(k | ksay)
+  arr.pS <- array(rep(p.S.k_ksay, n), dim=c(n,n,n))
   arr.uR <- array(rep(mapply(function(i) u.R(i, ns), ns), each=n), dim=c(n,n,n))
   EV.R = t(apply(arr.uR * arr.pS, MARGIN=c(1,3), FUN=sum))
-  apply(EV.R, MARGIN=2, softmax, alph)
+  apply(EV.R, MARGIN=2, softmax, alph) # rowsums -> 2D arr, x(rows) = kest, y(cols) = ksay
 }
+```
 
+```{r}
 alph = 10
-p.defec = 0
-p.l0r.kest_ksay = diag(n)
-p.l1s1.ksay_k = sender(1, 1, p.l0r.kest_ksay)
-p.l1s0.ksay_k = sender(0, 1, p.l0r.kest_ksay)
-p.l1s.ksay_k = p.defec*p.l1s1.ksay_k + (1-p.defec)*p.l1s0.ksay_k
-p.l1r.kest_ksay = receiver(p.l1s.ksay_k)
-p.l2s0.ksay_k = sender(0,1,p.l1r.kest_ksay)
+p.defec = 0.5
+p.r0 = r.0()
+p.s1.defec.ksay_k = sender(1, 0, p.r0)
+p.s1.coop.ksay_k = sender(0, 1, p.r0)
+p.s1.comb.ksay_k = p.defec*p.s1.defec.ksay_k + (1-p.defec)*p.s1.coop.ksay_k
+p.r1.kest_ksay = receiver(p.s1.comb.ksay_k)
+p.s2.coop.ksay_k = sender(0, 1, p.r1.kest_ksay)
 
-image(p.l2s0.ksay_k, xlab = 'k', ylab='ksay')
 
+
+blank <- ggplot() + theme_minimal()
+fig.r0 <- fig(p.r0, "ksay", "kest", "Receiver L0") 
+legend <- get_legend(fig.r0)
+fig.s1 <- fig(p.s1.comb.ksay_k, "k", "ksay", "Sender L1 Combined") + theme(legend.position="none")
+fig.r1 <- fig(p.r1.kest_ksay, "ksay", "kst", "Receiver L1") + theme(legend.position="none")
+fig.s2 <- fig(p.s2.coop.ksay_k, "k", "ksay", "Sender L2 Cooperative") + theme(legend.position="none")
+plot_grid(blank,fig.r0 + theme(legend.position="none"), 
+          fig.s1, fig.r1, fig.s2, legend,
+          nrow=2, byrow = FALSE)
 ```
 
-## L1 Sender P(ksay|k)
+# new utility for sender
+
 ```{r}
-EV.L1S_ksay <- function(util, cost) { #x(rows) = ksay, y(cols) = k, z(list) = kest
-  arr.pR <- aperm(array(rep(p.L0R_kest(), each=n), dim=c(n,n,n)), c(2,1,3)) # probability that kest is guessed, in a n x n x n array
-  arr.uS <- aperm(array(rep(mapply(function(i) u.S(i, ns, util, cost), ns), each=n), dim=c(n,n,n)), c(1,3,2))
-  apply(arr.uS * arr.pR, MARGIN=c(1,2), FUN=sum) # listsums -> 2D arr, x(rows) = ksay, y(cols) = k
+u.S <- function(ksay, k, kest, bias, error){ 
+  bias * (kest - k) - error * (kest - k)^2 - (ksay - k)^2
 }
 
-# apply(array(1:12, dim=c(2,3,2)), MARGIN=c(1,2), FUN=sum)
+# round(
+#   array(
+#     u.S(rep(seq(0,1,0.1), 11*11), rep(rep(seq(0,1,0.1),each=11), 11), rep(seq(0,1,0.1),each=11*11), 1, 1), 
+#     dim=c(n,n,n)),
+#   2) #x(rows) = ksay, y(cols) = k, z(lists) = kest
 
-#ADD NOTES
 
-p.L1S_ksay <- function(util, cost, alph) {
-  EV.S <- EV.L1S_ksay(util, cost)
-  apply(EV.S, MARGIN=2, softmax, alph) # x(rows) = ksay, y(cols) = k
+## Sender P(ksay|k)
+sender = function(bias, error, p.R.kest_ksay){ #x(rows) = ksay, y(cols) = k, z(list) = kest
+  arr.pR <- aperm(array(rep(p.R.kest_ksay, each=n), dim=c(n,n,n)), c(2,1,3))
+  arr.uS <- array(
+    u.S(ns, 
+        rep(rep(ns, each=n), n), 
+        rep(ns, each=n*n),
+        bias, 
+        error), 
+    dim=c(n,n,n))
+  EV = apply(arr.uS * arr.pR, MARGIN=c(1,2), FUN=sum)
+  apply(EV, MARGIN=2, softmax, alph) # listsums -> 2D arr, x(rows) = ksay, y(cols) = k
 }
-
-# apply(apply(array(c(1:3,rep(3,9)), dim=c(2,3,2)), MARGIN=c(1,2), FUN=sum), MARGIN=2, softmax, 10)
-
-# round(p.L1S_ksay(1,1,ALPH),6)
-
-ALPH
-fig(p.L1S_ksay(1,1,ALPH), "k", "ksay") # defectors
-fig(p.L1S_ksay(0,1,ALPH), "k", "ksay") # cooperators
-
-# round(p.L1S_ksay(1,1,10)[11,] / sum(p.L1S_ksay(1,1,10)[11,]),3)
-# matrix(u.R(rep(seq(0,1,0.1), 11), rep(seq(0,1,0.1),each=11)), nrow=11)[11]
-
-p.L1S_ksay.k <- function(util, cost, alph) {
-  arr.ksay.k <- p.L1S_ksay(util, cost, alph)
-  arr.k <- p.k()
-  arr.ksay.k * arr.k
-  # apply(arr.k*arr.ksay.k, MARGIN=2, function(i) i / sum(i)) # normalize columns to sum to 1
-}
-
-p.L1S_ksay.k(1,1,ALPH)
 ```
 
-## L1 Receiver P(kest|ksay)
 ```{r}
-p.defec = 1
-alph = ALPH
-cost = 1
-EV.L1R_kest <- function(p.defec, cost, alph) { #x(rows) = ksay, y(cols) = k, z(list) = kest
-  p.defec <- logitToProb(pmin(10, pmax(-10, p.defec)))
-  p.L1S.ksay_k <- p.defec * p.L1S_ksay(1,cost,alph) + (1-p.defec) * p.L1S_ksay(0,cost,alph) #include prior to get joint prob, then renormalize below
-  # p.L1S <- p.defec * p.L1S_ksay.k(1,cost,alph) + (1-p.defec) * p.L1S_ksay.k(0,cost,alph) #x(rows) = ksay, y(cols) = k
-  # P(ksay | k)
-  # EV(kest | ksay)
-  p.L1S.k_ksay <- p.L1S.ksay_k / rowSums(p.L1S.ksay_k)
-  arr.pS <- array(rep(p.L1S.k_ksay, n), dim=c(n,n,n)) # p(k|ksay)?
-  arr.uR <- array(rep(mapply(function(i) u.R(i, ns), ns), each=n), dim=c(n,n,n))
-  t(apply(arr.uR * arr.pS, MARGIN=c(1,3), FUN=sum)) # rowsums -> 2D arr, x(rows) = kest, y(cols) = ksay
-}
+alph = 40
+p.s1.defec.ksay_k = sender(1, 0, p.r0)
+p.s1.coop.ksay_k = sender(0, 1, p.r0)
+p.s1.comb.ksay_k = p.defec*p.s1.defec.ksay_k + (1-p.defec)*p.s1.coop.ksay_k
+p.r1.kest_ksay = receiver(p.s1.comb.ksay_k)
+p.s2.coop.ksay_k = sender(1, 0, p.r1.kest_ksay)
 
-matrix(1:4, nrow=2)
-matrix(1:4, nrow=2) / rowSums(matrix(1:4, nrow=2))
-apply(array(1:8, dim=c(2,2,2)), MARGIN=c(1,3), FUN=sum)
-
-#t(apply(array(1:12, dim=c(2,3,2)), MARGIN=c(1,3), FUN=sum))
-#axes swapped?
-#fig(EV.L1R_kest(probToLogit(1),1,10), "ksay", "kest")
-
-p.L1R_kest <- function(p.defec, cost, alph) {
-  EV.R <- EV.L1R_kest(p.defec, cost, alph)
-  apply(EV.R, MARGIN=2, softmax, alph) # x(rows) = kest, y(cols) = ksay
-}
-
-# apply(t(apply(array(c(1:3,rep(3,9)), dim=c(3,2,2)), MARGIN=c(1,3), FUN=sum)), MARGIN=2, softmax, 1)
-
-fig(p.L1R_kest(probToLogit(0.5),1,ALPH), "ksay", "kest") # 50% defectors, 50% cooperators
-fig(p.L1R_kest(probToLogit(1),1,ALPH), "ksay", "kest") # 100% defectors, 0% cooperators
-fig(p.L1R_kest(probToLogit(0),1,ALPH), "ksay", "kest") # 0% defectors, 100% cooperators
+fig.s1 <- fig(p.s1.comb.ksay_k, "k", "ksay", "Sender L1 Combined") + theme(legend.position="none")
+fig.r1 <- fig(p.r1.kest_ksay, "ksay", "kest", "Receiver L1") + theme(legend.position="none")
+fig.s2 <- fig(p.s2.coop.ksay_k, "k", "ksay", "Sender L2 Cooperative") + theme(legend.position="none")
+plot_grid(blank,fig.r0 + theme(legend.position="none"), 
+          fig.s1, fig.r1, fig.s2, legend,
+          nrow=2, byrow = FALSE)
+ggsave("img/model_alph100_defec50.png", width=8, height=5.5)
 ```
-
-## L2 Sender P(ksay|k)
-```{r}
-EV.L2S_ksay <- function(p.defec, util, cost, alph) { #x(rows) = ksay, y(cols) = k, z(list) = kest
-  arr.pR <- aperm(array(rep(p.L1R_kest(p.defec,cost,alph), each=n), dim=c(n,n,n)), c(2,1,3)) # probability that kest is guessed, in a n x n matrix
-  arr.uS <- aperm(array(rep(mapply(function(i) u.S(i, ns, util, cost), ns), each=n), dim=c(n,n,n)),c(1,3,2))
-  apply(arr.uS * arr.pR, MARGIN=c(1,2), FUN=sum) # listsums -> 2D arr, x(rows) = ksay, y(cols) = k
-}
-colSums(p.L1R_kest(p.defec,cost,alph))
-aperm(array(rep(mapply(function(i) u.S(i, ns, 0, cost), ns), each=n), dim=c(n,n,n)),c(1,3,2))
-
-rowSums(EV.L2S_ksay(p.defec,1,cost,alph))
-EV.L2S_ksay(p.defec,0,cost,1)
-
-p.L2S_ksay <- function(p.defec, util, cost, alph) {
-  EV.S <- EV.L2S_ksay(p.defec, util, cost, alph)
-  apply(EV.S, MARGIN=2, softmax, alph) # x(rows) = ksay, y(cols) = k
-}
-
-fig(EV.L2S_ksay(probToLogit(1),1,1,100), "k","ksay")
-fig(EV.L2S_ksay(probToLogit(1),0,1,ALPH), "k","ksay")
-
-p.L2S_ksay.k <- function(p.defec, util, cost, alph) {
-  arr.ksay.k <- p.L2S_ksay(p.defec, util, cost, alph)
-  arr.k <- p.k()
-  arr.k*arr.ksay.k
-  # apply(arr.k*arr.ksay.k, MARGIN=2, function(i) i / sum(i)) # normalize columns to sum to 1
-}
-```
-
-
-
-# Cooperator, given 100% defectors, 0% cooperators
-```{r}
-fig(p.L2S_ksay(probToLogit(1),0,1,10), "k", "ksay")
-```
-
-# Cooperator, given 0% defectors, 100% cooperators
-```{r}
-fig(p.L2S_ksay(probToLogit(0),0,1,ALPH), "k", "ksay")
-```
-
-# Cooperator, given 50% defectors, 50% cooperators
-```{r}
-fig(p.L2S_ksay(probToLogit(0.5),0,1,ALPH), "k", "ksay")
-```
-
-# Defector, given 50% defectors, 50% cooperators
-```{r}
-fig(p.L2S_ksay(probToLogit(0.5),1,1,ALPH), "k", "ksay")
-```
-
-
-
-
