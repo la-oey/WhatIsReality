@@ -43,7 +43,7 @@ softmax <- function(alph, allEV) { ## allEV = vector of numerics
 
 ### Figure Generator
 ```{r}
-fig <- function(mat, labx, laby, title) {
+fig <- function(mat, labx="", laby="", title="") {
   mat %>%
     as_tibble() %>%
     mutate(ky = ns) %>%
@@ -76,12 +76,21 @@ p.k <- function(prior = "u"){
 ### Utility
 ```{r}
 # sender's utility
-# util = {1 = overestimate, 0 = honest, -1 = underestimate}
-u.S <- function(k, kest, util, cost){
-  util * kest - cost * (kest - k)^2
+u.S <- function(ksay, k, kest, 
+  bias.rw, error.rw,
+  bias.mw, error.mw,
+  bias.rm, error.rm){
+  rw = kest - k
+  mw = ksay - k
+  rm = kest - ksay
+  bias.rw * rw - error.rw * rw^2 + bias.mw * mw - error.mw * mw^2 + bias.rm * rm - error.rm * rm^2
 }
 
-# t(matrix(u.S(rep(seq(0,1,0.1), 11), rep(seq(0,1,0.1),each=11), 1, 1), nrow=11)) #x(rows) = kest, y(cols) = k
+# round(
+#   array(
+#     u.S(rep(seq(0,1,0.1), 11*11), rep(rep(seq(0,1,0.1),each=11), 11), rep(seq(0,1,0.1),each=11*11), 1, 1), 
+#     dim=c(n,n,n)),
+#   2) #x(rows) = ksay, y(cols) = k, z(lists) = kest
 
 # receiver's utility
 u.R <- function(k, kest){
@@ -102,9 +111,17 @@ r.0 <- function() {
 }
 
 ## Sender P(ksay|k)
-sender = function(util, cost, p.R.kest_ksay){ #x(rows) = ksay, y(cols) = k, z(list) = kest
-  arr.pR <- aperm(array(rep(p.R.kest_ksay, each=n), dim=c(n,n,n)), c(2,1,3)) 
-  arr.uS <- aperm(array(rep(mapply(function(i) u.S(i, ns, util, cost), ns), each=n), dim=c(n,n,n)), c(1,3,2))
+sender = function(bias.rw, error.rw, 
+                  bias.mw, error.mw, 
+                  bias.rm, error.rm, 
+                  p.R.kest_ksay){ #x(rows) = ksay, y(cols) = k, z(list) = kest
+  arr.pR <- aperm(array(rep(p.R.kest_ksay, each=n), dim=c(n,n,n)), c(3,1,2))
+  arr.uS <- array(
+    u.S(ns, 
+        rep(rep(ns, each=n), n), 
+        rep(ns, each=n*n),
+        bias.rw, error.rw, bias.mw, error.mw, bias.rm, error.rm), 
+    dim=c(n,n,n))
   EV = apply(arr.uS * arr.pR, MARGIN=c(1,2), FUN=sum)
   apply(EV, MARGIN=2, softmax, alph) # listsums -> 2D arr, x(rows) = ksay, y(cols) = k
 }
@@ -119,71 +136,55 @@ receiver = function(p.S.ksay_k){ #x(rows) = ksay, y(cols) = k, z(list) = kest
 }
 ```
 
-```{r}
-alph = 10
+
+
+
+```{r warning=FALSE}
+alph = 40
 p.defec = 0.5
 p.r0 = r.0()
-p.s1.defec.ksay_k = sender(1, 0, p.r0)
-p.s1.coop.ksay_k = sender(0, 1, p.r0)
+p.s1.defec.ksay_k = sender(1, 0, 0, 1, 0, 0, p.r0)
+p.s1.coop.ksay_k = sender(0, 1, 0, 0, 0, 0, p.r0)
 p.s1.comb.ksay_k = p.defec*p.s1.defec.ksay_k + (1-p.defec)*p.s1.coop.ksay_k
 p.r1.kest_ksay = receiver(p.s1.comb.ksay_k)
-p.s2.coop.ksay_k = sender(0, 1, p.r1.kest_ksay)
-
+p.s2.coop.ksay_k = sender(0, 1, 0, 0, 0, 0, p.r1.kest_ksay)
 
 
 blank <- ggplot() + theme_minimal()
 fig.r0 <- fig(p.r0, "ksay", "kest", "Receiver L0") 
 legend <- get_legend(fig.r0)
 fig.s1 <- fig(p.s1.comb.ksay_k, "k", "ksay", "Sender L1 Combined") + theme(legend.position="none")
-fig.r1 <- fig(p.r1.kest_ksay, "ksay", "kst", "Receiver L1") + theme(legend.position="none")
-fig.s2 <- fig(p.s2.coop.ksay_k, "k", "ksay", "Sender L2 Cooperative") + theme(legend.position="none")
-plot_grid(blank,fig.r0 + theme(legend.position="none"), 
-          fig.s1, fig.r1, fig.s2, legend,
-          nrow=2, byrow = FALSE)
-```
-
-# new utility for sender
-
-```{r}
-u.S <- function(ksay, k, kest, bias, error){ 
-  bias * (kest - k) - error * (kest - k)^2 - (ksay - k)^2
-}
-
-# round(
-#   array(
-#     u.S(rep(seq(0,1,0.1), 11*11), rep(rep(seq(0,1,0.1),each=11), 11), rep(seq(0,1,0.1),each=11*11), 1, 1), 
-#     dim=c(n,n,n)),
-#   2) #x(rows) = ksay, y(cols) = k, z(lists) = kest
-
-
-## Sender P(ksay|k)
-sender = function(bias, error, p.R.kest_ksay){ #x(rows) = ksay, y(cols) = k, z(list) = kest
-  arr.pR <- aperm(array(rep(p.R.kest_ksay, each=n), dim=c(n,n,n)), c(2,1,3))
-  arr.uS <- array(
-    u.S(ns, 
-        rep(rep(ns, each=n), n), 
-        rep(ns, each=n*n),
-        bias, 
-        error), 
-    dim=c(n,n,n))
-  EV = apply(arr.uS * arr.pR, MARGIN=c(1,2), FUN=sum)
-  apply(EV, MARGIN=2, softmax, alph) # listsums -> 2D arr, x(rows) = ksay, y(cols) = k
-}
-```
-
-```{r}
-alph = 40
-p.s1.defec.ksay_k = sender(1, 0, p.r0)
-p.s1.coop.ksay_k = sender(0, 1, p.r0)
-p.s1.comb.ksay_k = p.defec*p.s1.defec.ksay_k + (1-p.defec)*p.s1.coop.ksay_k
-p.r1.kest_ksay = receiver(p.s1.comb.ksay_k)
-p.s2.coop.ksay_k = sender(1, 0, p.r1.kest_ksay)
-
-fig.s1 <- fig(p.s1.comb.ksay_k, "k", "ksay", "Sender L1 Combined") + theme(legend.position="none")
 fig.r1 <- fig(p.r1.kest_ksay, "ksay", "kest", "Receiver L1") + theme(legend.position="none")
 fig.s2 <- fig(p.s2.coop.ksay_k, "k", "ksay", "Sender L2 Cooperative") + theme(legend.position="none")
 plot_grid(blank,fig.r0 + theme(legend.position="none"), 
           fig.s1, fig.r1, fig.s2, legend,
           nrow=2, byrow = FALSE)
-ggsave("img/model_alph100_defec50.png", width=8, height=5.5)
+ggsave("img/model.full_alph40_defec50.png", width=8, height=5.5)
+```
+
+```{r}
+for(p.def in c(0, 0.5, 1)){
+  p.defec = p.def
+  
+  p.r0 = r.0()
+  p.s1.defec.ksay_k = sender(1, 0, 0, 1, 0, 0, p.r0)
+  p.s1.coop.ksay_k = sender(0, 1, 0, 0, 0, 0, p.r0)
+  p.s1.comb.ksay_k = p.defec*p.s1.defec.ksay_k + (1-p.defec)*p.s1.coop.ksay_k
+  p.r1.kest_ksay = receiver(p.s1.comb.ksay_k)
+  p.s2.coop.ksay_k = sender(0, 1, 0, 0, 0, 0, p.r1.kest_ksay)
+  
+  blank <- ggplot() + theme_minimal()
+  fig.r0 <- fig(p.r0, "ksay", "kest", "Receiver L0") 
+  legend <- get_legend(fig.r0)
+  fig.s1 <- fig(p.s1.comb.ksay_k, "k", "ksay", paste0("Sender L1 ",(1-p.def)*100,"% Cooperative")) + theme(legend.position="none")
+  fig.r1 <- fig(p.r1.kest_ksay, "ksay", "kest", "Receiver L1") + theme(legend.position="none")
+  fig.s2 <- fig(p.s2.coop.ksay_k, "k", "ksay", "Sender L2 Cooperative") + theme(legend.position="none")
+  plot_grid(blank,fig.r0 + theme(legend.position="none"), 
+            fig.s1, fig.r1, fig.s2, legend,
+            nrow=2, byrow = FALSE)
+  ggsave(paste0("img/model.full_p", p.def*100, "_",
+                "rwbmwe_vs_rwe__rwe", 
+                ".png"), 
+         width=9.5, height=6)
+}
 ```
