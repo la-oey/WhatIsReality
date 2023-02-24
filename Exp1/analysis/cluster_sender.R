@@ -70,11 +70,14 @@ poisson.mixture <- function(util, lambda, weight){
   mapply(
     function(k){
       kstar = kx
-      weight*dpois((kstar-k), lambda)/ppois(ifelse(util==1, 100-k, k), lambda)+(1-weight)*(1/length(kx))
+      weight*dpois((kstar-k)*util, lambda)/ppois(ifelse(util==1, 100-k, k), lambda)+(1-weight)*(1/length(kx))
     },
     kx
   )
 }
+
+poisson.mixture(-1, log(10), probToLogit(0.2))
+poisson.pred(log(10), probToLogit(0.2))
 
 poisson.pred <- function(lambda, weight){
   matrix(
@@ -100,21 +103,15 @@ sender.LL <- function(lambda, weight){
   )
 }
 
-set.seed(1000)
-for(i in 1:40){
-  tryCatch({
-    sender.fit <- summary(mle(sender.LL,
-                              start=list(lambda=rnorm(1, 0, 1),
-                                         weight=rnorm(1, 0, 1)),
-                              method = "BFGS"))
-    print(i)
-    break
-  }, error = function(e){
-    # message(e)
-  })
-}
+
+sender.fit <- summary(mle(sender.LL,
+                          start=list(lambda=rnorm(1, 0, 1),
+                                     weight=rnorm(1, 0, 1)),
+                          method = "BFGS"))
 sender.coef = coef(sender.fit)
+exp(sender.coef["lambda", "Estimate"])
 poisson.pred(sender.coef["lambda", "Estimate"], sender.coef["weight", "Estimate"]) %>%
+  # poisson.pred(log(10), probToLogit(0.2)) %>%
   as.data.frame() %>%
   rename(overest = V1,
          underest = V2) %>%
@@ -123,5 +120,20 @@ poisson.pred(sender.coef["lambda", "Estimate"], sender.coef["weight", "Estimate"
   gather("goal","prob",1:2) %>%
   ggplot(aes(x=k, y=ksay, fill=prob)) +
   geom_tile() +
+  scale_x_continuous(expand=c(0,0)) +
+  scale_y_continuous(expand=c(0,0)) +
+  scale_fill_gradient(low="white",high="purple") +
   facet_wrap(~goal)
 
+
+
+sender %>%
+  filter(cost == "linear") %>%
+  count(goal, k, ksay) %>%
+  complete(goal=c("overestimate","underestimate"), k=0:100, ksay=0:100, fill = list(n = 0)) %>%
+  ggplot(aes(x=k, y=ksay, fill=n)) +
+  geom_tile() +
+  scale_x_continuous(expand=c(0,0)) +
+  scale_y_continuous(expand=c(0,0)) +
+  scale_fill_gradient(low="white",high="purple") +
+  facet_wrap(~goal)
