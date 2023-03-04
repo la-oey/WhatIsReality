@@ -1,0 +1,526 @@
+---
+title: "Figures"
+author: "Lauren Oey"
+date: "1/27/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lme4)
+library(lmerTest)
+library(ggthemes)
+library(ggtext)
+
+trials <- read_csv("trials.csv") %>%
+  mutate(goal = paste0(goal, "estimate"),
+         goal = as.factor(goal),
+         cost = ifelse(cost=="unif", "linear", "quadratic"),
+         cond = paste(goal, cost))
+
+sender <- trials %>% filter(roleCurrent=="sender")
+receiver <- trials %>% filter(roleCurrent=="receiver")
+
+panelcolor = "#dee4f0"
+condcolors = c("#cc7667","#8b2f00","#679cd0","#003c70")
+```
+
+## general info
+
+### condition counts
+
+```{r}
+trials %>%
+  distinct(subjID, goal, cost) %>%
+  count(goal, cost)
+```
+
+## correlation of sender's truth and lies
+
+```{r}
+cor.test(sender$ksay, sender$k) # r = 0.73, t(6374) = 84.52, p < 0.0001
+cor(sender$ksay, sender$k)^2 # r^2 = 0.53
+
+contrasts(sender$goal) <- contr.sum(2)
+summary(lmer(ksay ~ k + (1 | subjID), data=sender))$coef
+summary(lmer(ksay ~ k + goal + (1 | subjID), data=sender))$coef
+```
+
+
+
+
+## sender's behavior (manipulation check for difference between conditions)
+
+```{r}
+s.diff.df <- sender %>%
+  mutate(kdiffs = ksay - k,
+         cost = paste(cost, "cost"),
+         goal = paste(goal, "goal"))
+s.bias <- sender %>%
+  group_by(goal, cost) %>%
+  summarise(bias.ksay = mean(ksay-k),
+            median.ksay = median(ksay-k)) %>%
+  mutate(bias = round(bias.ksay, 1),
+         bias = ifelse(bias > 0, paste0("+",bias), as.character(bias)),
+         bias = paste0("Delta[report - truth] == ", bias),
+         cost = paste(cost, "cost"),
+         goal = paste(goal, "goal"))
+
+r.diff.df <- receiver %>%
+  mutate(kdiffs = kest - ksay,
+         cost = paste(cost, "cost"),
+         goal = paste(goal, "goal"))
+r.bias <- receiver %>%
+  group_by(goal, cost) %>%
+  summarise(bias.kest = mean(kest-ksay),
+            median.kest = median(kest-ksay)) %>%
+  mutate(bias = round(bias.kest, 1),
+         bias = ifelse(bias > 0, paste0("+",bias), as.character(bias)),
+         bias = paste0("Delta[inferred - report] == ", bias),
+         cost = paste(cost, "cost"),
+         goal = paste(goal, "goal"))
+
+ggplot() +
+  geom_rect(data=s.diff.df, aes(xmin=-88, xmax=88, ymin=-1100, ymax=0), fill="gray40") +
+  geom_vline(xintercept = 0) +
+  geom_segment(data=s.bias, aes(x=bias.ksay, xend=bias.ksay, y=0, yend=1100), colour="gray60") +
+  geom_segment(data=r.bias, aes(x=bias.kest, xend=bias.kest, y=0, yend=-1100), colour="gray60") +
+  geom_histogram(data=s.diff.df, aes(x=kdiffs, y=..count.., fill=cond), colour="black") +
+  geom_histogram(data=r.diff.df, aes(x=kdiffs, y=-..count.., fill=cond), colour="black") +
+  geom_text(data=data.frame(goal="overestimate goal"), 
+            aes(x=-70, y=120, label="Sender"), parse=TRUE,
+            family="Optima") +
+  geom_text(data=data.frame(goal="overestimate goal"), 
+            aes(x=-70, y=-120, label="Judge"), parse=TRUE, colour="white",
+            family="Optima") +
+  geom_text(data=s.bias, aes(x=47, y=600, label=bias), 
+            parse=TRUE, family="Optima") +
+  geom_text(data=r.bias, aes(x=47, y=-600, label=bias), 
+            parse=TRUE, colour="white", family="Optima") +
+  scale_x_continuous("Bias", limits=c(-88,88), expand=c(0,0)) +
+  scale_y_continuous("Count",
+                     limits=c(-1100,1100), expand=c(0,0),
+                     breaks=seq(-1000,1000,250), labels=c(seq(1000,0,-250),seq(250,1000,250))) +
+  scale_fill_manual(values=condcolors) +
+  facet_grid(cost ~ goal) +
+  guides(fill=FALSE) +
+  theme_classic() +
+  theme(strip.background = element_rect(fill=panelcolor),
+        strip.text = element_text(size=13, family="Optima"),
+        panel.spacing = unit(0.8, "lines"),
+        axis.title = element_text(size=13, family="Optima"),
+        axis.text = element_text(size=11, family="Optima"))
+ggsave("img/final/player_hist.png", width=7.5, height=5)
+# ggsave("img/player_hist2.png", width=7.5, height=6)
+```
+
+## check that sender lies in the right direction
+
+```{r}
+sender.stat <- sender %>%
+  mutate(bias.ksay = ksay - k,
+         goal = as.factor(goal),
+         cost = as.factor(cost))
+
+# sender overestimates > 0
+sender.stat %>% # xbar = 5.87
+  filter(goal == "overestimate") %>%
+  summarise(mean = mean(bias.ksay))
+sender.stat %>% # t(3171) = 22.34
+  filter(goal == "overestimate") %>%
+  pull(bias.ksay) %>%
+  t.test(alternative="greater", mu=0)
+# t$statistic
+# t$parameter #df
+# t$p.value
+t.test(filter(sender.stat,goal == "overestimate")$ksay, filter(sender.stat,goal == "overestimate")$k, paired=T) #equivalent
+
+# linear model
+summary(lmer(bias.ksay ~ goal + (1|subjID), data=sender.stat))
+summary(lmer(bias.ksay ~ (1|subjID) + (1|k), data=filter(sender.stat, goal=="overestimate"))) #beta = 6.14, t(117) = 4.65, p < 0.0001
+
+# sender underestimates < 0
+sender.stat %>% # xbar = -4.35
+  filter(goal == "underestimate") %>%
+  summarise(mean = mean(bias.ksay))
+sender.stat %>% # t(3203) = -18.93
+  filter(goal == "underestimate") %>%
+  pull(bias.ksay) %>%
+  t.test(alternative="less", mu=0)
+
+#linear model
+summary(lmer(bias.ksay ~ (1|subjID) + (1|k), data=filter(sender.stat, goal=="underestimate"))) #beta = -4.85, t(89) = -4.14, p < 0.0001
+
+contrasts(sender.stat$goal) <- contr.sum(2)
+# contrasts(sender.stat$cost) <- contr.treatment(2)
+summary(lmer(bias.ksay ~ goal + (1 | subjID), data=sender.stat))
+summary(lmer(bias.ksay ~ goal + goal:cost + (1 | subjID), data=sender.stat))
+summary(lmer(bias.ksay ~ goal * cost + (1 | subjID), data=sender.stat))
+summary(lm(bias.ksay ~ goal + goal:cost, data=sender.stat))
+
+summary(lmer(ksay ~ k + goal + (1 | subjID), data=sender.stat))
+summary(lmer(ksay ~ k + goal + goal:cost + (1 | subjID), data=sender.stat))
+summary(lmer(ksay ~ k + goal * cost + (1 | subjID), data=sender.stat)) #this will do
+summary(lmer(ksay ~ k + goal * cost + (1 | subjID), data=sender.stat))$coef
+
+m.full <- lmer(ksay ~ k * goal * cost + (1 | subjID), data=sender.stat)
+summary(m.full)
+m.noInterKGoal <- lmer(ksay ~ k + goal * cost + k:cost + k:goal + (1 | subjID), data=sender.stat)
+summary(m.noInterKGoal)
+anova(m.full, m.noInterKGoal)
+```
+
+## check that sender lie magnitude aligns with cost functions
+
+```{r}
+s.over <- sender.stat %>%
+  filter(goal == "overestimate") 
+mean(filter(s.over, cost=="linear")$bias.ksay) - mean(filter(s.over, cost=="quadratic")$bias.ksay) # dbar = 3.89
+t.test(filter(s.over, cost=="linear")$bias.ksay, # t(2380) = 7.98
+       filter(s.over, cost=="quadratic")$bias.ksay, 
+       alternative="greater", var.equal=FALSE)
+contrasts(s.over$cost) <- c(1,0)
+summary(lmer(bias.ksay ~ cost + (1|subjID) + (1|k), data=s.over)) #beta = -3.86, t(63) = -1.83, p = .07
+
+s.under <- sender.stat %>%
+  filter(goal == "underestimate") 
+mean(filter(s.under, cost=="linear")$bias.ksay) - mean(filter(s.under, cost=="quadratic")$bias.ksay) # dbar = -6.06
+t.test(filter(s.under, cost=="linear")$bias.ksay, # t(2029) = -14.06
+       filter(s.under, cost=="quadratic")$bias.ksay, 
+       alternative="less", var.equal=FALSE)
+summary(lmer(bias.ksay ~ cost + (1|subjID) + (1|k), data=s.under)) #beta = 6.32, t(64) = 3.15, p < .01
+
+#combined
+s.comb <- s.under %>%
+  mutate(bias.ksay = -bias.ksay) %>%
+  bind_rows(s.over) %>%
+  mutate(cost = factor(cost, levels=c("quadratic","linear")))
+
+summary(lmer(bias.ksay ~ cost + (1|subjID) + (1|k), data=s.comb)) #beta = 5.11, t(129) = 3.47, p < 0.001
+```
+
+
+## judge's considering goals (correcting in the right direction)
+
+```{r}
+receiver.stat <- receiver %>%
+  mutate(bias.ksay = kest - ksay,
+         goal = as.factor(goal),
+         cost = as.factor(cost))
+
+# receiver  kest - ksay < 0
+receiver.stat %>% # xbar = -6.97
+  filter(goal == "overestimate") %>%
+  summarise(mean = mean(bias.ksay))
+receiver.stat %>% # t(3205) = -37.47
+  filter(goal == "overestimate") %>%
+  pull(bias.ksay) %>%
+  t.test(alternative="less", mu=0)
+summary(lmer(bias.ksay ~ (1|subjID) + (1|ksay), data=filter(receiver.stat, goal=="overestimate"))) #beta = -6.96, t(100) = -8.17, p < 0.0001
+
+contrasts(receiver.stat$goal) <- c(1,-1)
+summary(lmer(bias.ksay ~ goal + (1 | subjID), data=receiver.stat))
+
+# receiver  kest - ksay > 0
+receiver.stat %>% # xbar = 5.83
+  filter(goal == "underestimate") %>%
+  summarise(mean = mean(bias.ksay))
+receiver.stat %>% # t(3275) = 27.45
+  filter(goal == "underestimate") %>%
+  pull(bias.ksay) %>%
+  t.test(alternative="greater", mu=0)
+summary(lmer(bias.ksay ~ (1|subjID) + (1|ksay), data=filter(receiver.stat, goal=="underestimate"))) #beta = 5.75, t(89) = 5.12, p < 0.0001
+```
+
+## judge varying behavior by cost (magnitude of correcting larger for easier cost)
+
+```{r}
+r.over <- receiver.stat %>%
+  filter(goal == "overestimate") 
+mean(filter(r.over, cost=="linear")$bias.ksay) - mean(filter(r.over, cost=="quadratic")$bias.ksay) # dbar = -4.11
+t.test(filter(r.over, cost=="linear")$bias.ksay, # t(2792) = -11.86
+       filter(r.over, cost=="quadratic")$bias.ksay, 
+       alternative="less", var.equal=FALSE)
+summary(lmer(bias.ksay ~ cost + (1|subjID) + (1|ksay), data=r.over)) #beta = -3.86, t(63) = -1.83, p = .07
+
+r.under <- receiver.stat %>%
+  filter(goal == "underestimate") 
+mean(filter(r.under, cost=="linear")$bias.ksay) - mean(filter(r.under, cost=="quadratic")$bias.ksay) # dbar = 4.05
+t.test(filter(r.under, cost=="linear")$bias.ksay, # t(2477) = 10.03
+       filter(r.under, cost=="quadratic")$bias.ksay, 
+       alternative="greater", var.equal=FALSE)
+
+#combined analysis
+summary(lmer(bias.ksay ~ cost + (1|subjID) + (1|ksay), data=r.under)) #beta = -3.86, t(63) = -1.83, p = .07
+
+#combined
+r.comb <- r.under %>%
+  mutate(bias.ksay = -bias.ksay) %>%
+  bind_rows(r.over) %>%
+  mutate(cost = factor(cost, levels=c("quadratic","linear")))
+
+summary(lmer(bias.ksay ~ cost + (1|subjID) + (1|k), data=r.comb)) #beta = -4.24, t(129) = -3.51, p < 0.001
+```
+
+## reduced bias accuracy of judge estimate vs lie from heuristic.
+
+```{r}
+r.2 <- receiver %>%
+  mutate(cost = paste(cost, "cost"),
+         goal = paste(goal, "goal"))
+abline.col = "gray40"
+ai.col = "black"
+
+ggplot(r.2, aes(x=k, y=kest, colour=cond)) +
+  geom_abline(slope=1, colour=abline.col, size=0.3) +
+  # geom_jitter(data=r2, aes(x=k, y=ksay), colour=ai.col, size=0.1, alpha=0.2) +
+  geom_jitter(size=0.5, alpha=0.1) +
+  geom_smooth(data=r.2, aes(x=k, y=ksay), method="lm", se=FALSE, size=1, colour=ai.col, alpha=0.5) +
+  geom_smooth(method="lm", se=FALSE, size=1) +
+  geom_hline(aes(yintercept=-Inf), colour="black", size=0.5, linetype="solid") + 
+  geom_vline(aes(xintercept=-Inf), colour="black", size=0.5, linetype="solid") + 
+  scale_x_continuous("Actual Truth", limits=c(0,100), expand=c(0,0)) +
+  scale_y_continuous("Inferred Truth", limits=c(0,100), expand=c(0,0)) +
+  scale_colour_manual(values=condcolors) +
+  guides(colour=FALSE) +
+  facet_grid(cost ~ goal) +
+  theme_tufte() +
+  theme(plot.background = element_rect(fill = "white", colour="white"),
+        strip.background = element_rect(fill=panelcolor),
+        strip.text = element_text(size=15, family="Optima"),
+        panel.spacing = unit(1, "lines"),
+        axis.title = element_text(size=15, family="Optima"),
+        axis.text = element_text(size=11, family="Optima"))
+ggsave("img/final/bias_lines.png", width=6,height=5.6)
+```
+
+```{r}
+receiver %>%
+  group_by(goal, cost) %>%
+  summarise(bias.ksay = mean(ksay-k),
+            bias.kest = mean(kest-k))
+```
+
+## but thats our AI heuristic... how do they compare to human, cost-sensitive liars? aggregated (mean bias) 
+
+```{r}
+
+```
+
+## Comparison of judges correction and their own behavior as sender.  
+does magnitude of believed bias track subjective cost for that person? (individual correlations.)
+(adding more variance, maybe too confusing?)
+
+```{r}
+condcolors2 = c("#679cd0","#003c70","#cc7667","#8b2f00")
+s2 <- sender %>%
+  group_by(subjID, cost, goal, cond) %>%
+  summarise(mean.ksay = mean(ksay-k))
+c(min(s2$mean.ksay),max(s2$mean.ksay))
+
+r2 <- receiver %>%
+  group_by(subjID) %>%
+  summarise(mean.kest = mean(kest-ksay))
+c(min(r2$mean.kest),max(r2$mean.kest))
+
+sr.2 <- s2 %>%
+  left_join(r2) %>%
+  mutate(cond = paste(cost, goal),
+         cond = factor(cond,
+                       levels=c("linear underestimate",
+                                "quadratic underestimate",
+                                "linear overestimate",
+                                "quadratic overestimate")))
+sr.2.summ <- sr.2 %>%
+  group_by(cond) %>%
+  summarise(r.mean = mean(mean.kest),
+            r.se = sd(mean.kest)/sqrt(n()),
+            s.mean = mean(mean.ksay),
+            s.se = sd(mean.ksay)/sqrt(n()))
+
+ggplot(sr.2, aes(x=mean.ksay, y=mean.kest, colour=cond)) +
+  geom_hline(yintercept=0, colour="gray40", size=0.3) +
+  geom_vline(xintercept=0, colour="gray40", size=0.3) +
+  geom_point(size=1, alpha=0.3, show.legend = FALSE) +
+  # geom_smooth(method="lm") +
+  stat_ellipse(size=0.6) +
+  geom_point(data=sr.2.summ, aes(x=s.mean, y=r.mean, fill=cond),
+             shape=23, colour="black", size=2.5) +
+  # geom_linerange(data=sr.2.summ, 
+  #                aes(x=s.mean, y=r.mean, ymin=r.mean-r.se, ymax=r.mean+r.se), 
+  #                size=0.8, show.legend = FALSE) +
+  # geom_linerange(data=sr.2.summ, 
+  #                aes(x=s.mean, xmin=s.mean-s.se, xmax=s.mean+s.se, y=r.mean), 
+  #                size=0.8, show.legend = FALSE) +
+  scale_x_continuous("Individual Sender's Mean *Report - Truth*", limits=c(-45, 45)) +
+  scale_y_continuous("Individual Judge's Mean *Inferred - Report*", 
+                     limits=c(-45, 45)) +
+  scale_colour_manual("", values=condcolors2) +
+  scale_fill_manual("", values=condcolors2) +
+  # facet_wrap(~cost) +
+  theme_classic() +
+  theme(legend.position = c(0.74, 0.88),
+        strip.background = element_rect(fill=panelcolor),
+        text=element_text(size=13, family="Optima"),
+        axis.title.x = element_markdown(),
+        axis.title.y = element_markdown())
+ggsave("img/final/indiv_lambda.png", width=5, height=4.5)
+```
+
+```{r}
+# sb <- sender %>%
+#   mutate(bias.ksay = ksay-k)
+# rb <- receiver %>%
+#   mutate(bias.kest = kest-ksay)
+
+s3 <- sender %>%
+  group_by(cost, goal) %>%
+  summarise(mean.ksay = mean(ksay-k))
+
+r3 <- receiver %>%
+  group_by(cost, goal) %>%
+  summarise(mean.kest = mean(kest-ksay))
+comp.aggr <- s3 %>%
+  left_join(r3) %>%
+  rename(aggr.ksay = mean.ksay,
+         aggr.kest = mean.kest)
+
+
+comp.aggr
+cor.test(comp.aggr$aggr.ksay, comp.aggr$aggr.kest) # r = -0.98, t(2) = -7.77, p = 0.016
+```
+
+## Individual differences
+
+```{r}
+sr.2.groups <- sr.2 %>%
+  left_join(comp.aggr, by=c("cost","goal")) %>%
+  mutate(corr.ksay = mean.ksay - aggr.ksay, #distance to aggregated means
+         corr.kest = mean.kest - aggr.kest) 
+  
+  
+cor.test(sr.2.groups$corr.ksay, sr.2.groups$corr.kest) # r = -0.57, t(129) = -7.79, p < 0.0001
+cor(sr.2.groups$corr.ksay, sr.2.groups$corr.kest)^2
+
+```
+
+
+redo plot for poster
+```{r}
+textsize = 2.6
+s.diff.df <- sender %>%
+  mutate(kdiffs = ksay - k,
+         costtype = ifelse(cost == "linear", "low", "high"),
+         cost = paste(costtype, cost, "cost"),
+         cost = factor(cost, levels=c("low linear cost", "high quadratic cost")),
+         goal = paste(goal, "goal"))
+s.bias <- sender %>%
+  group_by(goal, cost) %>%
+  summarise(bias.ksay = mean(ksay-k),
+            median.ksay = median(ksay-k)) %>%
+  mutate(bias = round(bias.ksay, 1),
+         bias = ifelse(bias > 0, paste0("+",bias), as.character(bias)),
+         bias = paste0("Delta[report - truth] == ", bias),
+         costtype = ifelse(cost == "linear", "low", "high"),
+         cost = paste(costtype, cost, "cost"),
+         cost = factor(cost, levels=c("low linear cost", "high quadratic cost")),
+         goal = paste(goal, "goal"))
+
+r.diff.df <- receiver %>%
+  mutate(kdiffs = kest - ksay,
+         costtype = ifelse(cost == "linear", "low", "high"),
+         cost = paste(costtype, cost, "cost"),
+         cost = factor(cost, levels=c("low linear cost", "high quadratic cost")),
+         goal = paste(goal, "goal"))
+r.bias <- receiver %>%
+  group_by(goal, cost) %>%
+  summarise(bias.kest = mean(kest-ksay),
+            median.kest = median(kest-ksay)) %>%
+  mutate(bias = round(bias.kest, 1),
+         bias = ifelse(bias > 0, paste0("+",bias), as.character(bias)),
+         bias = paste0("Delta[inferred - report] == ", bias),
+         costtype = ifelse(cost == "linear", "low", "high"),
+         cost = paste(costtype, cost, "cost"),
+         cost = factor(cost, levels=c("low linear cost", "high quadratic cost")),
+         goal = paste(goal, "goal"))
+
+ggplot() +
+  geom_rect(data=s.diff.df, aes(xmin=-88, xmax=88, ymin=-1100, ymax=0), fill="gray40") +
+  geom_vline(xintercept = 0) +
+  geom_segment(data=s.bias, aes(x=bias.ksay, xend=bias.ksay, y=0, yend=1100), colour="gray60") +
+  geom_segment(data=r.bias, aes(x=bias.kest, xend=bias.kest, y=0, yend=-1100), colour="gray60") +
+  geom_histogram(data=s.diff.df, aes(x=kdiffs, y=..count.., fill=cond), colour="black") +
+  geom_histogram(data=r.diff.df, aes(x=kdiffs, y=-..count.., fill=cond), colour="black") +
+  geom_text(data=data.frame(goal="overestimate goal"), 
+            aes(x=-70, y=120, label="Sender"), parse=TRUE,
+            family="Optima", size=textsize) +
+  geom_text(data=data.frame(goal="overestimate goal"), 
+            aes(x=-70, y=-120, label="Judge"), parse=TRUE, colour="white",
+            family="Optima", size=textsize) +
+  geom_text(data=s.bias, aes(x=47, y=600, label=bias), 
+            parse=TRUE, family="Optima", size=textsize) +
+  geom_text(data=r.bias, aes(x=47, y=-600, label=bias), 
+            parse=TRUE, colour="white", family="Optima", size=textsize) +
+  scale_x_continuous("Bias", limits=c(-88,88), expand=c(0,0)) +
+  scale_y_continuous("Count",
+                     limits=c(-1100,1100), expand=c(0,0),
+                     breaks=seq(-1000,1000,250), labels=c(seq(1000,0,-250),seq(250,1000,250))) +
+  scale_fill_manual(values=condcolors) +
+  facet_grid(cost ~ goal) +
+  guides(fill=FALSE) +
+  theme_classic() +
+  theme(strip.background = element_rect(fill=panelcolor),
+        strip.text = element_text(size=13, family="Optima"),
+        panel.spacing = unit(0.8, "lines"),
+        axis.title = element_text(size=13, family="Optima"),
+        axis.text = element_text(size=11, family="Optima"))
+ggsave("img/final_poster/player_hist.png", width=5, height=4.5)
+```
+
+```{r}
+sr.2 <- s2 %>%
+  left_join(r2) %>%
+  mutate(cost = ifelse(cost=="linear", "low linear", "high quadratic"),
+         cond = paste(cost, goal),
+         cond = factor(cond,
+                       levels=c("low linear underestimate",
+                                "high quadratic underestimate",
+                                "low linear overestimate",
+                                "high quadratic overestimate")))
+sr.2.summ <- sr.2 %>%
+  group_by(cond) %>%
+  summarise(r.mean = mean(mean.kest),
+            r.se = sd(mean.kest)/sqrt(n()),
+            s.mean = mean(mean.ksay),
+            s.se = sd(mean.ksay)/sqrt(n()))
+
+ggplot(sr.2, aes(x=mean.ksay, y=mean.kest, colour=cond)) +
+  geom_hline(yintercept=0, colour="gray40", size=0.3) +
+  geom_vline(xintercept=0, colour="gray40", size=0.3) +
+  geom_point(size=1, alpha=0.3, show.legend = FALSE) +
+  # geom_smooth(method="lm") +
+  stat_ellipse(size=0.6) +
+  geom_point(data=sr.2.summ, aes(x=s.mean, y=r.mean, fill=cond),
+             shape=23, colour="black", size=2.5) +
+  # geom_linerange(data=sr.2.summ, 
+  #                aes(x=s.mean, y=r.mean, ymin=r.mean-r.se, ymax=r.mean+r.se), 
+  #                size=0.8, show.legend = FALSE) +
+  # geom_linerange(data=sr.2.summ, 
+  #                aes(x=s.mean, xmin=s.mean-s.se, xmax=s.mean+s.se, y=r.mean), 
+  #                size=0.8, show.legend = FALSE) +
+  scale_x_continuous("Individual Sender's Mean *Report - Truth*", limits=c(-45, 45)) +
+  scale_y_continuous("Individual Judge's Mean *Inferred - Report*", 
+                     limits=c(-45, 45)) +
+  scale_colour_manual("", values=condcolors2) +
+  scale_fill_manual("", values=condcolors2) +
+  # facet_wrap(~cost) +
+  theme_classic() +
+  theme(legend.position = c(0.77, 0.88),
+        strip.background = element_rect(fill=panelcolor),
+        text=element_text(size=13, family="Optima"),
+        axis.title.x = element_markdown(),
+        axis.title.y = element_markdown())
+ggsave("img/final_poster/indiv_lambda.png", width=5, height=4.5)
+```
+

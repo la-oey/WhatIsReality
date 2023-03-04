@@ -1,0 +1,196 @@
+<!--
+TODO:
+1. get images of products
+2. make product list correct
+3. randomize product list
+4. make the actual content of the experiment not filler.
+5. make it less ugly.
+ -->
+
+<!DOCTYPE html>
+<html>
+<html lang="en-US">
+<meta charset="UTF-8">
+<head>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script type="text/javascript" src='js/client.js'></script>
+    <script type="text/javascript" src='js/dataio.js'></script>
+    <script type="text/javascript" src='js/script.js'></script>
+    <script type="text/javascript" src='js/utils.js'></script>
+    <script type="text/javascript" src='js/vars.js'></script>
+    <script type="text/javascript" src='js/clickMapping.js'></script>
+    <script type="text/javascript" src='js/posttestQs.js'></script>
+    <script type="text/javascript" src='js/questions.js'></script>
+</head>
+
+
+<body onload="pageLoad();">
+
+<div id="consent" class="screen">
+    <h1 class="mtitle">University of California, San Diego<br>
+        Consent to act as a research subject</h1>
+    <p> Edward Vul, Ph.D. is conducting a research study to find out more about decision
+        making.
+        You have been asked to participate because you are an undergraduate here at UCSD. <br><br>
+        <b>PROCEDURES.</b> If you agree to participate in this study, the following will happen to you:<br></p>
+    <p style="margin-left: 15%; margin-right: 15%">
+        1. You will sit at the computer and play a game.<br>
+        2. Try to get the highest score you can.<br>
+    </p>
+    <p>
+        <b>RISKS</b>. No potential risks or discomforts are anticipated except for the possibility that some tasks may
+        be slightly boring.<br><br>
+        <b>PAYMENT/REMUNERATION</b>. In consideration of your time and inconvenience, you will receive 1/2 hour of course
+        credit. The procedures and length of participation will last approximately 30 minutes.<br><br>
+        <b>RIGHTS.</b> You may call the UCSD Human Research Protection Program at 858-657-5100 to ask about your rights
+        as a research subject or to report research-related problems.<br><br>
+        <b>BENEFITS</b>. There will be no direct benefit to you from these procedures. However, the investigator may
+        learn more about basic questions pertaining to memory, perception, cognition, and learning. This knowledge may
+        have benefits to society in fields ranging from education to design of airplane cockpits, but these benefits
+        will be indirect.<br><br>
+        <b>EXPLANATION.</b> The researcher has explained this study to you and answered your questions. If you have
+        questions or research related problems, you may reach Edward Vul at 858-534-4401.<br><br>
+        <b>VOLUNTARY NATURE OF PARTICIPATION.</b> Participation in research is entirely voluntary. You may refuse to
+        participate or withdraw at any time without penalty.<br><br>
+        <b>CONFIDENTIALITY.</b> Research records will be kept confidential to the extent allowed by law. As with all
+        research, there is also the possibility of loss of confidentiality. Information from participants will be
+        identified by a study number. The database which relates the study number to a specific subject will be
+        maintained in the study coordinators office.<br><br>
+        <b>COPY OF CONSENT.</b> You have received a copy of this consent document to keep and a copy of the Experimental
+        Bill of Rights.
+    </p>
+
+
+    <button class="big-button active-button" onclick="clickConsent();"> Click here to consent and agree to participate</button>
+</div>
+
+<div id="instructions" class="screen">
+    <p class="mtitle">
+        Instructions for the game. Please read carefully.
+    </p>
+    <div>
+        <p>The goal of the game is for you to get as many points as possible, while keeping your opponent to as few points as possible.</p>
+
+        <p>In the game, there's a jar of 50% <b class='r'>red</b> and 50% <b class='b'>blue</b> marbles. You will play two different roles: the marble-drawer and the guesser.</p> 
+
+        <p>In half the trials, you'll play as the <b>marble-drawer</b>. You'll sample 
+        <b class='r'>1</b><b class='b'>0</b><b class='r'>0</b>
+        <b class='b'>m</b><b class='r'>a</b><b class='b'>r</b><b class='r'>b</b><b class='b'>l</b><b class='r'>e</b><b class='b'>s</b>
+        from the jar, and send your opponent a potentially altered picture of what you saw. What you send does not need to accurately represent what happened, <i>and your opponent may not believe you.</i> Your opponent will then guess how many <b class='r'>red</b> marbles you <i>actually</i> drew from the jar.</p>
+
+        <p>In the other trials, you'll play as the <b>guesser</b>. Your opponent will tell you how many marbles they supposedly drew, and then you'll guess how many <b class='r'>red</b> marbles were <i>actually</i> drawn.</p>
+        
+        <p>Here's how points work:</p>
+
+        <p class="indent"><b>As the guesser, you want to be as accurate as possible.</b> If you guess incorrectly, you lose points equal to how off your guess was. For example, if you guess <b class="exEst"></b> but the truth was <b>45</b>, you lose 3 points. But if you guess 45 exactly, you lose 0 points.</p><br>
+        <p class="indent"><b>As the marble-drawer, you want your opponent to <i class="instructGoal"></i>estimate by as much as possible.</b> If your opponent's guess is <b class="exEst"></b> but the truth was <b>45</b>, you gain 3 points. But you wouldn't gain any points if your opponent guesses 45 or <i id="instructGoal2"></i>.</p>
+
+        <p>As the marble-drawer, you don't have to report the truth -- you can change what you show to your opponent to get them to <i class="instructGoal"></i>estimate. <b id="instructCost"></b> After, the marbles will get shaken before the report is given to the guesser.</p>
+
+    	<p>This is what a round looks like:</p>
+    </div>
+    <center><img src="https://experiments.evullab.org/marble-flip-1/img/instructionImg.png" width="80%"></center><br>
+    <button class="big-button active-button" id="continueInstruct" onclick="clickInstructions();">Click here to continue</button>
+</div>
+
+
+<div id="prePractice" class="screen">
+    <p class="mtitle">
+        First, you'll have <b id="instructPractice"></b> practice rounds.
+    </p>
+    <button class="big-button active-button" id="continuePractice" onclick="clickPrePractice();">Click here to continue</button>
+</div>
+
+<div id="postPractice" class="screen">
+    <p class="mtitle">
+        Nice job! You're ready to move on to the experiment.
+    </p>
+    <div>
+       <p>Next, you and your opponent will play <b id="instructRounds"></b> rounds. Good luck!</p>
+    </div>
+    <button class="big-button active-button" id="continueTrial" onclick="clickPostPractice();">Click here to continue</button>
+</div>
+
+<div id="trial" class="screen">
+    <p class="mtitle trialNum">Round</p>
+    <div id="wrapper">
+        <div id="urn">
+            <svg id="urnsvg"></svg>
+        </div>
+        <img id="jar" src="img/jar.jpg">
+        <p id="progressInstr"># clicks to switch color</p>
+        <svg id="progress"></svg>
+    </div>
+
+    <br>
+    <div id="sendResponse" class="trialText">
+        <p id="sendText" class='instructText'>
+            You drew <b id='redDraw'></b> <b class='r'>red</b> and <b id='blueDraw'></b> <b class='b'>blue</b> marbles.<br><br>
+            You want your opponent to <i class="instructGoal"></i>estimate <b class='r'>red</b> marbles.<br><br>
+            Click on marbles to switch their color for the report that you will send your opponent.<br><br>
+            You will tell your opponent you got <b id='redRep' class='repmarbles'></b> <b class='r'>red</b> and <b id='blueRep' class='repmarbles'></b> <b class='b'>blue</b> marbles.<br><br>
+        </p>
+    </div>
+    <div id="receiveResponse" class="trialText">
+        <p>Your opponent wants you to <i class="instructGoal"></i>estimate. Your opponent said they drew <b id='reportedMarbles'></b> red marbles.<br><br>
+        <label>How many <b class='r'>red</b> marbles did they actually draw before they changed it?</label>
+        <input type='text' id='reportTruth' value='' size='3' maxlength='3' autocomplete='off' autocorrect='off' autocapitalize='off' spellcheck='false'/></p>
+    </div>
+    <center><div id="waiting" class="trialText"><p>Waiting</p></div></center>
+    <br><br>
+    <button class="big-button active-button" id="next" type="button">Next!</button>
+</div>
+
+<div id="scoreboard" class="screen">
+	<p class="mtitle trialNum">Round</p><br>
+    <div id="catchQ">
+        <label id="catchQlab"></label>
+        <input type="text" id="reportCatch" value="" size="3" maxlength="3" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+        <button class="active-button" id="catch-button" type="button" onclick="submitCatchText();">Submit</button>
+        <img id="catchFeedback" height=18 vertical-align="middle" hspace="20">
+    </div>
+    <br>
+    <div>
+    	<p id="scoreReport"></p>
+        <div class="scoreboardDiv" id="trialScoreboardDiv">
+            <div class="scoreCol"><b id="playerPts"></b></div>
+            <div class="scoreCol"><b id="oppPts"></b></div>
+        </div>
+    	<div class="scoreboardDiv" id="totalScoreboardDiv">
+            <center><h2>Scoreboard</h2></center>
+    	    <div class="scoreCol">Your Score:<br><b class="totalScores playerScore">0</b></div>
+    	    <div class="scoreCol">Opponent's Score:<br><b class="totalScores oppScore">0</b></div>
+     	</div>
+     </div>
+	<br><br><br><br><br>
+    <button class="big-button active-button" id="nextScoreboard" type="button" onclick="trialDone();">Next!</button>
+</div>
+
+
+<div id="winner" class="screen">
+    <center><h1>Scoreboard</h1></center>
+    <div class="scoreboardDiv" id="finalScoreboardDiv">
+        <div class="scoreCol">Your Score:<br><b class="playerScore">0</b></div>
+        <div class="scoreCol">Opponent's Score:<br><b class="oppScore">0</b></div>
+    </div><br>
+    <p class="mtitle" id="whowon"></p>
+    <button class="big-button active-button" id="continueWinner" onclick="clickWinner();">Continue</button>
+</div>
+
+<div id="postquestions" class="screen">
+    <p class="mtitle trialNum">Just a few more questions</p><br>
+    <center>
+        <div id="posttestSurvey"></div><br><br>
+    </center>
+    <button class="big-button active-button" id="continueQs" onclick="clickQs();">Continue</button>
+</div>
+
+<div id="completed" class="screen">
+    <p class="mtitle">Thank you for your participation!</p>
+    <button class="big-button active-button" id="finished" onclick="experimentDone();">Finished!</button>
+</div>
+
+</body>

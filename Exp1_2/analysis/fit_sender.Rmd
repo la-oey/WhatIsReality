@@ -1,0 +1,359 @@
+---
+title: "fit_sender"
+author: "Lauren Oey"
+date: "2023-02-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(stats4)
+library(tidyverse)
+library(cluster)
+library(factoextra)
+
+trials <- read_csv("trials.csv") %>%
+  mutate(goal = paste0(goal, "estimate"),
+         goal = as.factor(goal),
+         cost = ifelse(cost=="unif", "linear", "quadratic"),
+         cond = paste(goal, cost))
+
+sender <- trials %>% filter(roleCurrent=="sender")
+receiver <- trials %>% filter(roleCurrent=="receiver")
+```
+
+```{r individuals, warning=FALSE}
+sender %>%
+  filter(cost == "linear") %>%
+  ggplot(aes(x=k, y=ksay, colour=goal)) +
+  geom_abline(slope=1) +
+  geom_point() +
+  geom_smooth(colour="black") +
+  scale_x_continuous(limits=c(0,100), expand=c(0,0)) +
+  scale_y_continuous(limits=c(0,100), expand=c(0,0)) +
+  facet_wrap(~subjID) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+```
+
+# fit Poisson model to senders
+
+## functions
+```{r}
+eval.s <- function(matr, ns){ #ns = 8 x 6 matrix of counts for all conditions
+  sum(log(matr)*ns)
+}
+
+logitToProb <- function(logit){
+  exp(logit) / (1+exp(logit))
+}
+
+probToLogit <- function(prob){
+  log(prob / (1 - prob))
+}
+
+kx = 0:100
+```
+
+## human data
+```{r}
+# sender behavior
+sender.vals <- sender %>%
+  filter(cost == "linear") %>%
+  count(goal, k, ksay) %>%
+  complete(goal=c("overestimate","underestimate"), k=0:100, ksay=0:100, fill = list(n = 0))
+sender.matr <- sender.vals %>%
+  pull(n) %>%
+  matrix(nrow=length(kx)^2)
+
+# validation using computer which we know should have lambda = 5
+comp.sender.vals <- receiver %>%
+  filter(cost == "linear") %>%
+  count(goal, k, ksay) %>%
+  complete(goal=c("overestimate","underestimate"), k=0:100, ksay=0:100, fill = list(n = 0)) 
+comp.sender.matr <- comp.sender.vals %>%
+  pull(n) %>%
+  matrix(nrow=length(kx)^2)
+```
+
+## Poisson plus uniform
+```{r}
+poisson.unif.mixture <- function(util, lambda, weight){
+  weight = logitToProb(pmin(10, pmax(-10, weight)))
+  lambda = exp(lambda)
+  mapply(
+    function(k){
+      kstar = kx
+      weight*dpois((kstar-k)*util, lambda)/ppois(ifelse(util==1, 100-k, k), lambda)+(1-weight)*(1/length(kx))
+    },
+    kx
+  )
+}
+
+poisson.unif.pred <- function(lambda, weight){
+  matrix(
+    mapply(
+      function(u) poisson.unif.mixture(u, lambda, weight), #repeat for each base rate condition
+      c(1, -1)), #repeat for each utility structure condition
+    nrow=length(kx)^2)
+}
+
+sender.unif.LL <- function(lambda, weight){
+  human <- sender.matr
+  -eval.s(
+    poisson.unif.pred(lambda, weight),
+    human
+  )
+}
+sender.unif.fit <- summary(mle(sender.unif.LL, 
+                          start=list(lambda=rnorm(1, 0, 1),
+                                     weight=rnorm(1, 0, 1)),
+                          method = "BFGS"))
+sender.unif.fit
+sender.unif.coef = coef(sender.unif.fit)
+
+poisson.unif.pred(sender.unif.coef["lambda", "Estimate"], 
+             sender.unif.coef["weight", "Estimate"]) %>%
+  as.data.frame() %>%
+  rename(overest = V1,
+         underest = V2) %>%
+  mutate(ksay = rep(kx, length(kx)),
+         k = rep(kx, each=length(kx))) %>%
+  gather("goal","prob",1:2) %>%
+  ggplot(aes(x=k, y=ksay, fill=prob)) +
+  geom_tile() +
+  scale_x_continuous(expand=c(0,0)) +
+  scale_y_continuous(expand=c(0,0)) +
+  scale_fill_gradient(low="white",high="purple") +
+  facet_wrap(~goal)
+```
+
+## Poisson plus neg Poisson
+```{r}
+poisson.mixture <- function(util, lambda, lambda2, weight){
+  weight = logitToProb(pmin(10, pmax(-10, weight)))
+  lambda = exp(lambda)
+  mapply(
+    function(k){
+      kstar = kx
+      weight*dpois((kstar-k)*util, lambda)/ppois(ifelse(util==1, 100-k, k), lambda)+
+        (1-weight)*dpois((k-kstar)*util, lambda2)/ppois(ifelse(util==1, k, 100-k), lambda2)
+    },
+    kx
+  )
+}
+poisson.pred <- function(lambda, lambda2, weight){
+  matrix(
+    mapply(
+      function(u) poisson.mixture(u, lambda, lambda2, weight), #repeat for each base rate condition
+      c(1, -1)), #repeat for each utility structure condition
+    nrow=length(kx)^2)
+}
+
+sender.LL <- function(lambda, lambda2, weight){
+  human <- sender.matr
+  -eval.s(
+    poisson.pred(lambda, lambda2, weight),
+    human
+  )
+}
+for(i in 1:40){
+  tryCatch({sender.fit <- summary(mle(sender.LL, 
+                                     start=list(lambda=rnorm(1, 0, 1),
+                                                lambda2=rnorm(1, 0, 1),
+                                                weight=rnorm(1, 0, 1)),
+                                     method = "BFGS"))
+  break
+  }, error = function(e){
+    # message(e)
+  })
+}
+sender.fit
+sender.coef = coef(sender.fit)
+
+poisson.pred(sender.coef["lambda", "Estimate"], 
+             sender.coef["lambda2", "Estimate"], 
+             sender.coef["weight", "Estimate"]) %>%
+  as.data.frame() %>%
+  rename(overest = V1,
+         underest = V2) %>%
+  mutate(ksay = rep(kx, length(kx)),
+         k = rep(kx, each=length(kx))) %>%
+  gather("goal","prob",1:2) %>%
+  ggplot(aes(x=k, y=ksay, fill=prob)) +
+  geom_tile() +
+  scale_x_continuous(expand=c(0,0)) +
+  scale_y_continuous(expand=c(0,0)) +
+  scale_fill_gradient(low="white",high="purple") +
+  facet_wrap(~goal)
+
+
+
+
+# comp.LL <- function(lambda, lambda2, weight){
+#   human <- comp.sender.matr
+#   -eval.s(
+#     poisson.pred(lambda, lambda2, weight),
+#     human
+#   )
+# }
+# for(i in 1:40){
+#   tryCatch({comp.fit <- summary(mle(comp.LL, 
+#                                      start=list(lambda=rnorm(1, 0, 1),
+#                                                 lambda2=rnorm(1, 0, 1),
+#                                                 weight=rnorm(1, 0, 1)),
+#                                      method = "BFGS"))
+#   break
+#   }, error = function(e){
+#     # message(e)
+#   })
+# }
+# comp.fit
+# comp.coef = coef(comp.fit)
+# 
+# poisson.pred(comp.coef["lambda", "Estimate"], 
+#              comp.coef["lambda2", "Estimate"], 
+#              comp.coef["weight", "Estimate"]) %>%
+#   as.data.frame() %>%
+#   rename(overest = V1,
+#          underest = V2) %>%
+#   mutate(ksay = rep(kx, length(kx)),
+#          k = rep(kx, each=length(kx))) %>%
+#   gather("goal","prob",1:2) %>%
+#   ggplot(aes(x=k, y=ksay, fill=prob)) +
+#   geom_tile() +
+#   scale_x_continuous(expand=c(0,0)) +
+#   scale_y_continuous(expand=c(0,0)) +
+#   scale_fill_gradient(low="white",high="purple") +
+#   facet_wrap(~goal)
+```
+## fitting to individuals
+```{r}
+unique.subjs <- sender %>%
+  filter(cost == "linear") %>%
+  distinct(subjID) %>%
+  pull(subjID)
+indiv.fits <- data.frame()
+for(s in unique.subjs){
+  print(s)
+  human <- sender %>%
+      filter(subjID == s)
+  human.goal <- unique(human$goal)
+  util.s <- ifelse(human.goal == "overestimate", 1, -1)
+  indiv.sender.unif.LL <- function(lambda, weight){
+    subj.matr <- human %>%
+      count(k, ksay) %>%
+      complete(k=0:100, ksay=0:100, fill = list(n = 0)) %>%
+      pull(n) %>%
+      matrix(nrow=length(kx))
+
+    -eval.s(
+      poisson.unif.mixture(util.s, lambda, weight),
+      subj.matr
+    )
+  }
+  indiv.sender.unif.lambda <- NA
+  indiv.sender.unif.weight <- NA
+  logL <- NA
+  for(i in 1:10){
+    tryCatch({
+      indiv.sender.unif.fit <- summary(mle(indiv.sender.unif.LL, 
+                                         start=list(lambda=rnorm(1, 0, 1),
+                                                    weight=rnorm(1, 0, 1)),
+                                         method = "BFGS"))
+      indiv.sender.unif.lambda <- indiv.sender.unif.fit@coef["lambda","Estimate"]
+      indiv.sender.unif.weight <- indiv.sender.unif.fit@coef["weight","Estimate"]
+      logL <- indiv.sender.unif.fit@m2logL
+      break
+      }, error = function(e){
+        message(paste("error",i))
+    })
+  }
+  
+  indiv.fits <- indiv.fits %>%
+    bind_rows(data.frame(
+      subjID = s,
+      goal = human.goal,
+      lambda.est = indiv.sender.unif.lambda,
+      weight.est = indiv.sender.unif.weight,
+      neg.2.ll = logL
+    ))
+}
+
+indiv.fits.df <- indiv.fits %>%
+  # mutate(adj.lambda.est = round(exp(lambda.est),2),
+  #        adj.weight.est = logitToProb(weight.est)) %>%
+  # select(adj.lambda.est, adj.weight.est) %>%
+  select(lambda.est, weight.est) %>%
+  na.omit()
+
+k2 <- kmeans(indiv.fits.df, centers=2, nstart=25)
+fviz_cluster(k2, data = indiv.fits.df)
+
+# indiv.fits.df %>%
+#   ggplot(aes(x=adj.weight.est, y=adj.lambda.est)) +
+#   geom_point()
+
+indiv.means <- sender %>%
+  filter(cost == "linear") %>%
+  mutate(bias = ksay - k,
+         bias = ifelse(goal=="underestimate", -bias, bias)) %>%
+  group_by(goal, subjID) %>%
+  summarise(mean = mean(bias))
+
+cluster.centers <- indiv.means %>%
+  ungroup() %>%
+  select(mean) %>%
+  kmeans(.,centers=4, nstart=25) %>%
+  .$centers %>%
+  as.data.frame()
+indiv.means %>%
+  ggplot(aes(x=mean)) +
+  geom_histogram() +
+  geom_vline(data=cluster.centers, aes(xintercept=mean))
+
+sender %>%
+  filter(cost == "linear") %>%
+  mutate(bias = ksay - k,
+         bias = ifelse(goal=="underestimate", -bias, bias)) %>%
+  ggplot(aes(x=bias)) +
+  geom_histogram() +
+  geom_vline(aes(xintercept = 0), alpha=0.5) +
+  facet_wrap(~subjID)
+```
+
+```{r}
+poisson.unif.pred(k2$centers[1,"lambda.est"], 
+                  k2$centers[1,"weight.est"]) %>%
+  as.data.frame() %>%
+  rename(overest = V1,
+         underest = V2) %>%
+  mutate(ksay = rep(kx, length(kx)),
+         k = rep(kx, each=length(kx))) %>%
+  gather("goal","prob",1:2) %>%
+  filter(goal == "overest") %>%
+  ggplot(aes(x=k, y=ksay, fill=prob)) +
+  geom_tile() +
+  scale_x_continuous(expand=c(0,0)) +
+  scale_y_continuous(expand=c(0,0)) +
+  scale_fill_gradient(low="white",high="purple")
+
+poisson.unif.pred(k2$centers[2,"lambda.est"], 
+                  k2$centers[2,"weight.est"]) %>%
+  as.data.frame() %>%
+  rename(overest = V1,
+         underest = V2) %>%
+  mutate(ksay = rep(kx, length(kx)),
+         k = rep(kx, each=length(kx))) %>%
+  gather("goal","prob",1:2) %>%
+  filter(goal == "overest") %>%
+  ggplot(aes(x=k, y=ksay, fill=prob)) +
+  geom_tile() +
+  scale_x_continuous(expand=c(0,0)) +
+  scale_y_continuous(expand=c(0,0)) +
+  scale_fill_gradient(low="white",high="purple")
+```
+
+
+
+
