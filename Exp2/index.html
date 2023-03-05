@@ -72,34 +72,32 @@ TODO:
         Instructions for the game. Please read carefully.
     </p>
     <div>
-        <p>The goal of the game is for you to get as many points as possible, while keeping your opponent to as few points as possible.</p>
+        <p>The goal of the game is for you to lose as few points as possible.</p>
 
-        <p>In the game, there's a jar of 50% <b class='r'>red</b> and 50% <b class='b'>blue</b> marbles. You will play two different roles: the marble-drawer and the guesser.</p> 
+        <p>In the game, there's a jar of 50% <b class='r'>red</b> and 50% <b class='b'>blue</b> marbles.</p> 
 
-        <p>In half the trials, you'll play as the <b>marble-drawer</b>. You'll sample 
+        <p>You play as the <b>guesser</b>, and your opponent plays as the <b>marble-drawer</b>. Your opponent will sample 
         <b class='r'>1</b><b class='b'>0</b><b class='r'>0</b>
         <b class='b'>m</b><b class='r'>a</b><b class='b'>r</b><b class='r'>b</b><b class='b'>l</b><b class='r'>e</b><b class='b'>s</b>
-        from the jar, and send your opponent a potentially altered picture of what you saw. What you send does not need to accurately represent what happened, <i>and your opponent may not believe you.</i> Your opponent will then guess how many <b class='r'>red</b> marbles you <i>actually</i> drew from the jar.</p>
-
-        <p>In the other trials, you'll play as the <b>guesser</b>. Your opponent will tell you how many marbles they supposedly drew, and then you'll guess how many <b class='r'>red</b> marbles were <i>actually</i> drawn.</p>
+        from the jar, and send you a potentially altered picture of what they saw. What they send does not need to accurately represent what happened, <i>and you may choose not to believe them.</i> You, as the guesser, will then estimate how many <b class='r'>red</b> marbles they <i>actually</i> drew from the jar.</p>
         
         <p>Here's how points work:</p>
 
-        <p class="indent"><b>As the guesser, you want to be as accurate as possible.</b> If you guess incorrectly, you lose points equal to how off your guess was. For example, if you guess <b class="exEst"></b> but the truth was <b>45</b>, you lose 3 points. But if you guess 45 exactly, you lose 0 points.</p><br>
-        <p class="indent"><b>As the marble-drawer, you want your opponent to <i class="instructGoal"></i>estimate by as much as possible.</b> If your opponent's guess is <b class="exEst"></b> but the truth was <b>45</b>, you gain 3 points. But you <i>don't gain any points if your opponent guesses 45 or below</i>.</p>
+        <p class="indent"><b>You, the guesser, want to be as accurate as possible.</b> If you guess incorrectly, you lose points equal to how off your guess was. For example, if you guess <b>48</b> but the truth was <b>45</b>, you lose 3 points. But if you guess 45 exactly, you lose 0 points.</p><br>
+        <p class="indent"><b>Your opponent, the marble-drawer, wants you to <i>over</i>estimate by as much as possible.</b> If your guess is <b>48</b> but the truth was <b>45</b>, they gain 3 points. But they don't gain any points if you guess 45 or <i>below</i>.</p>
 
-        <p>As the marble-drawer, you don't have to report the truth -- you can change what you show to your opponent to get them to <i class="instructGoal"></i>estimate. <b id="instructCost"></b> After, the marbles will get shaken before the report is given to the guesser.</p>
+        <p>The marble-drawer doesn't have to report the truth -- they can change what they show to trick you into overestimating. <b>They can click on individual marbles to switch their color.</b> After, the marbles get shaken before the report is given to you, the guesser.</p>
 
     	<p>This is what a round looks like:</p>
     </div>
-    <center><img src="https://experiments.evullab.org/marble-flip-1/img/instructionImg.png" width="80%"></center><br>
+    <center><img src="https://experiments.evullab.org/marble-flip-2/img/instructionImg.png" width="80%"></center><br>
     <button class="big-button active-button" id="continueInstruct" onclick="clickInstructions();">Click here to continue</button>
 </div>
 
 
 <div id="prePractice" class="screen">
     <p class="mtitle">
-        First, you'll have <b id="instructPractice"></b> practice rounds.
+        First, you'll have <b id="instructPractice"></b> practice rounds, where you will get a sense of the game. You will play as the marble-drawer, then you will play as the guesser.
     </p>
     <button class="big-button active-button" id="continuePractice" onclick="clickPrePractice();">Click here to continue</button>
 </div>
@@ -109,7 +107,7 @@ TODO:
         Nice job! You're ready to move on to the experiment.
     </p>
     <div>
-       <p>Next, you and your opponent will play <b id="instructRounds"></b> rounds. Good luck!</p>
+       <p>Next, you will play <b id="instructRounds"></b> rounds, and you will <i>only</i> play as the <b>guesser</b>. Your opponent, the marble-drawer, is a previous participant, who behaved <b id="oppDishonesty"></b>. For each trial, you will see what they said for each trial they played in the order that they played it. Good luck!</p>
     </div>
     <button class="big-button active-button" id="continueTrial" onclick="clickPostPractice();">Click here to continue</button>
 </div>

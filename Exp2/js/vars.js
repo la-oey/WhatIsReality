@@ -5,12 +5,13 @@ var expt = {
     practiceTrials: 2, //how many practice trials //switch to 4
     marblesSampled: 100, //total number of marbles drawn per trial
     probRed: 0.5,
-    lambdaAI: [5,10,20],
+    lambdaAI: [0.3,8.1,21.9],
     roleFirst: 'sender', //roles: {'sender','receiver'}
     roles: ['sender','receiver'],
-    cost: 'unif', // ['unif', 'linear'],
-    costF: [uniformCost, linearCost],
-    goal: 'over', // ['over','under'],
+    cost: 'unif',
+    costF: uniformCost,
+    goal: 'over',
+    oppDishonesty: ['honest','dishonest_small','dishonest_big'],
     catchTrials: [],
     scoreTotal: {
         player: 0,
@@ -20,7 +21,7 @@ var expt = {
         experiment_id: 2228,
         credit_token: 'b315147ae43241ea9c65086cb510cfb7'
     },
-    pilot: false,
+    pilot: true,
     debug: false
 };
 var trial = {

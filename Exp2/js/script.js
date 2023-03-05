@@ -4,11 +4,15 @@
 
 // TODO, Potentially: pick randomly between human/threePoints instructions.
 function pageLoad() {
-    // expt.cost = sample(expt.cost);
-    // expt.goal = sample(expt.goal);
-    expt.lambdaAI = sample(expt.lambdaAI);
-    expt.costF = expt.cost == 'linear' ? linearCost : uniformCost;
-    $('.instructGoal').text(expt.goal);
+    expt.oppDishonesty = sample(expt.oppDishonesty); //expectations about opponent dishonesty
+    expt.lambdaAI = sample(expt.lambdaAI); //actual opponent dishonesty
+    if(expt.oppDishonesty == "honest"){
+        $('#oppDishonesty').html("honestly");
+    } else if(expt.oppDishonesty == "dishonest_small"){
+        $('#oppDishonesty').html("a bit dishonestly");
+    } else{
+        $('#oppDishonesty').html("very dishonestly");
+    }
 
     clicksMap[startPage]();
 }
@@ -16,13 +20,6 @@ function pageLoad() {
 function clickConsent() {
     $('#consent').css('display','none');
     $('#instructions').css('display','block');
-    let exEst = expt.goal == "over" ? 48 : 42;
-    $('.exEst').html(exEst);
-    let instrCost = "Click on individual marbles to switch their color.";
-    if(expt.cost == 'linear') {
-        instrCost += " The more marbles you switch color, the more clicks you'll need to switch each marble.";
-    }
-    $('#instructCost').html(instrCost);
     $('#instructPractice').html(expt.practiceTrials);
     $('#instructRounds').html(expt.trials);
 }
@@ -35,11 +32,8 @@ function clickInstructions() {
 function clickPrePractice(){
     $('#prePractice').css('display','none');
     expt.catchTrials = distributeChecks(expt.practiceTrials, 1); // 50% of practice trials have an attention check
-    if(expt.roleFirst == 'sender'){
-        sender();
-    } else{
-        receiver();
-    }
+    trial.role = 'sender';
+    sender();
 }
 
 function clickPostPractice(){
@@ -52,12 +46,8 @@ function clickPostPractice(){
     expt.scoreTotal.opp = 0;
     
     expt.roleFirst = sample(expt.roles);
-    trial.role = expt.roleFirst;
-    if(trial.role == 'sender'){
-        sender();
-    } else{
-        receiver();
-    }
+    trial.role = 'receiver';
+    receiver();
 }
 
 
@@ -82,7 +72,7 @@ function sender() {
     function drawingWait(){
         flickerWait("draw");
 
-        trial.time.wait = waittime(1000 + 3000*exponential(0.75));
+        trial.time.wait = 0; //waittime(1000 + 3000*exponential(0.75));
         setTimeout(function(){
             clearInterval(trial.timer);
 
@@ -190,7 +180,6 @@ function trialDone() {
     trial.trialNumber += 1;
     recordData();
     
-
     if(trial.exptPart == "practice" & trial.trialNumber >= expt.practiceTrials){
         trial.trialNumber = 0;
         trial.exptPart = 'trial';
@@ -208,16 +197,13 @@ function trialDone() {
         }
 
         $('#finalScoreboardDiv').css('opacity',1);
+        data = {client: client, expt: expt, trials: trialData};
+        writeServer(data);
 
         $('#winner').css('display','block');
     } else {
-        if(trial.role == 'sender'){
-            trial.role = 'receiver';
-            receiver();
-        } else{
-            trial.role = 'sender';
-            sender();
-        }
+        trial.role = 'receiver'; //switch to receiver in practice and test
+        receiver();
     }
 
 }
@@ -240,7 +226,5 @@ function clickQs() {
 }
 
 function experimentDone() {
-    data = {client: client, expt: expt, trials: trialData};
-    writeServer(data);
     submitExternal(client);
 }
