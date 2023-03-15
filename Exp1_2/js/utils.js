@@ -187,10 +187,10 @@ function report(){
     function senderWait() {
         flickerWait("opp");
 
-        trial.time.wait = waittime(1000 + 3000*exponential(0.75));
+        trial.time.wait = waittime(2000 + 3000*exponential(0.75));
         setTimeout(function(){
             clearInterval(trial.timer);
-            $('#waiting').html("<p>Your opponent made a decision.</p>");
+            $('#waiting').html("<p>Your opponent's decision has been successfully collected.</p>");
             $('#waiting').css('opacity',1);
             $('#next').html("Next!");
             $('#next').unbind("click");
@@ -297,9 +297,9 @@ function flickerWait(type){
     let op = 0.1;
     let increment = 0.1;
     if(type == "opp"){
-        $('#waiting').html('<p>Waiting for your opponent...</p>');
+        $('#waiting').html("<p>Standby! We are collecting your opponent's decision now. Our servers are sometimes slow.</p>");
     } else if(type == "draw"){
-        $('#waiting').html('<p>Drawing marbles...</p>');
+        $('#waiting').html("<p>Drawing marbles...</p>");
     }
 
     $('#waiting').css('opacity',0);

@@ -6,13 +6,6 @@
 function pageLoad() {
     expt.oppDishonesty = sample(expt.oppDishonesty); //expectations about opponent dishonesty
     expt.lambdaAI = sample(expt.lambdaAI); //actual opponent dishonesty
-    if(expt.oppDishonesty == "honest"){
-        $('#oppDishonesty').html("honestly");
-    } else if(expt.oppDishonesty == "dishonest_small"){
-        $('#oppDishonesty').html("a bit dishonestly");
-    } else{
-        $('#oppDishonesty').html("very dishonestly");
-    }
 
     clicksMap[startPage]();
 }
@@ -37,6 +30,14 @@ function clickPrePractice(){
 }
 
 function clickPostPractice(){
+    if(expt.oppDishonesty == "honest"){
+        $('#oppDishonesty').html("honestly");
+    } else if(expt.oppDishonesty == "dishonest_small"){
+        $('#oppDishonesty').html("a bit dishonestly");
+    } else{
+        $('#oppDishonesty').html("very dishonestly");
+    }
+    
     $('#postPractice').css('display','none');
 
     expt.catchTrials = distributeChecks(expt.trials, 0.1); // 0.1 of expt trials have an attention check
@@ -45,7 +46,6 @@ function clickPostPractice(){
     expt.scoreTotal.player = 0;
     expt.scoreTotal.opp = 0;
     
-    expt.roleFirst = sample(expt.roles);
     trial.role = 'receiver';
     receiver();
 }

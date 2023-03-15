@@ -5,8 +5,8 @@ var expt = {
     practiceTrials: 2, //how many practice trials //switch to 4
     marblesSampled: 100, //total number of marbles drawn per trial
     probRed: 0.5,
+    practiceLambdaAI: 5,
     lambdaAI: [0.3,8.1,21.9],
-    roleFirst: 'sender', //roles: {'sender','receiver'}
     roles: ['sender','receiver'],
     cost: 'unif',
     costF: uniformCost,
@@ -18,10 +18,10 @@ var expt = {
         opp: 0
     },
     sona: {
-        experiment_id: 2228,
-        credit_token: 'b315147ae43241ea9c65086cb510cfb7'
+        experiment_id: 2488,
+        credit_token: '79d15902e9034cb6b65a542be205401c'
     },
-    pilot: true,
+    pilot: false,
     debug: false
 };
 var trial = {

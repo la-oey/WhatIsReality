@@ -205,20 +205,22 @@ function computerDraw(){
     // groundTruth
     trial.marbles.drawn.red = rbetabinom(alphabeta, alphabeta, expt.marblesSampled);
     trial.marbles.drawn.blue = expt.marblesSampled - trial.marbles.drawn.red;
+    let lambdaAI = trial.exptPart == 'practice' ? expt.practiceLambdaAI : expt.lambdaAI;
 
     if(expt.goal == 'over'){ //overreport
-        trial.marbles.reported.red = Math.min(trial.marbles.drawn.red + rpoisson(expt.lambdaAI), expt.marblesSampled);
+        trial.marbles.reported.red = Math.min(trial.marbles.drawn.red + rpoisson(lambdaAI), expt.marblesSampled);
     } else{ //underreport
-        trial.marbles.reported.red = Math.max(trial.marbles.drawn.red - rpoisson(expt.lambdaAI), 0);
+        trial.marbles.reported.red = Math.max(trial.marbles.drawn.red - rpoisson(lambdaAI), 0);
     }
     trial.marbles.reported.blue = expt.marblesSampled - trial.marbles.reported.red;
 }
 
 function computerInfer(){
+    let lambdaAI = trial.exptPart == 'practice' ? expt.practiceLambdaAI : expt.lambdaAI;
     if(expt.goal == 'over'){
-        trial.marbles.inferred.red = Math.max(trial.marbles.reported.red - rpoisson(expt.lambdaAI), 0);
+        trial.marbles.inferred.red = Math.max(trial.marbles.reported.red - rpoisson(lambdaAI), 0);
     } else{
-        trial.marbles.inferred.red = Math.min(trial.marbles.reported.red + rpoisson(expt.lambdaAI), 100)
+        trial.marbles.inferred.red = Math.min(trial.marbles.reported.red + rpoisson(lambdaAI), 100)
     }
     trial.marbles.inferred.blue = expt.marblesSampled - trial.marbles.inferred.red;
 }
@@ -227,7 +229,7 @@ function submitTrial(){
     trial.time.response = Date.now() - trial.time.start;
     $('#trial').css('display','none');
     score();
-    if(trial.exptPart == 'practice' | (trial.exptPart == 'trial' & (trial.trialNumber + 1) % 5 == 0) | expt.catchTrials.includes(trial.trialNumber)){
+    if(trial.exptPart == 'practice' | (trial.exptPart == 'trial' & (trial.trialNumber + 1) % 10 == 0) | expt.catchTrials.includes(trial.trialNumber)){
         toScoreboard();
     } else{
         trialDone();
@@ -445,7 +447,9 @@ function recordData(){
         roleCurrent: trial.role,
         marblesSampled: expt.marblesSampled,
         probRed: expt.probRed,
-        lambda: expt.lambdaAI,
+        practiceLambda: expt.practiceLambdaAI,
+        trialLambda: expt.lambdaAI,
+        instructedLambda: expt.oppDishonesty,
         drawnRed: trial.marbles.drawn.red,
         reportedRed: trial.marbles.reported.red,
         inferredRed: trial.marbles.inferred.red,
