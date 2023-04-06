@@ -19,8 +19,10 @@ trials <- read_csv("trials.csv") %>%
          cost = ifelse(cost=="unif", "linear", "quadratic"),
          cond = paste(goal, cost))
 
-sender <- trials %>% filter(roleCurrent=="sender")
-receiver <- trials %>% filter(roleCurrent=="receiver")
+sender <- trials %>% filter(roleCurrent=="sender") %>%
+  mutate(bias = ksay-k)
+receiver <- trials %>% filter(roleCurrent=="receiver") %>%
+  mutate(bias = kest-ksay)
 
 fontfam = "Optima"
 panelcolor = "#dee4f0"
@@ -444,3 +446,50 @@ cor(sr.2.groups$corr.ksay, sr.2.groups$corr.kest)^2
 
 ```
 
+
+## Responses by trial
+```{r}
+sender %>%
+  ggplot(aes(x=trialNumber, y=bias, colour=cond)) +
+  geom_point(size=0.2) +
+  geom_smooth(colour="black") +
+  scale_colour_manual("", values=condcolors2) +
+  facet_wrap(~cond, scales="free")
+summary(lmer(bias ~ trialNumber * cond + (1|subjID), data=sender))
+
+receiver %>%
+  ggplot(aes(x=trialNumber, y=bias, colour=cond)) +
+  geom_point(size=0.2) +
+  geom_smooth(colour="black") +
+  scale_colour_manual("", values=condcolors2)
+summary(lmer(bias ~ trialNumber * cond + (1|subjID), data=receiver))
+
+learn.df <- data.frame()
+for(i in unique(trials$subjID)){
+  subj.df <- trials %>%
+    filter(subjID == i)
+  subj.s.df <- subj.df %>%
+    filter(roleCurrent == "sender") %>%
+    mutate(bias = ksay-k)
+  subj.r.df <- subj.df %>%
+    filter(roleCurrent == "receiver") %>%
+    mutate(bias = kest-ksay)
+  s.learn <- summary(lm(bias ~ trialNumber, data=subj.s.df))
+  r.learn <- summary(lm(bias ~ trialNumber, data=subj.r.df))
+  learn.df <- learn.df %>%
+    bind_rows(data.frame(
+      subjID = rep(unique(subj.df$subjID), 2),
+      cond = rep(unique(subj.df$cond), 2),
+      role = c("sender","receiver"),
+      trialNumber.est = c(coef(s.learn)["trialNumber","Estimate"], coef(r.learn)["trialNumber","Estimate"]),
+      trialNumber.se = c(coef(s.learn)["trialNumber","Std. Error"], coef(r.learn)["trialNumber","Std. Error"]),
+      trialNumber.t = c(coef(s.learn)["trialNumber","t value"], coef(r.learn)["trialNumber","t value"]),
+      trialNumber.pvalue = c(coef(s.learn)["trialNumber","Pr(>|t|)"], coef(r.learn)["trialNumber","Pr(>|t|)"])
+    ))
+}
+
+learn.df %>%
+  mutate(trialNumber.est = round(trialNumber.est, 2),
+         signif = trialNumber.pvalue < 0.05) %>%
+  count(role, signif)
+```
