@@ -5,12 +5,14 @@
 // TODO, Potentially: pick randomly between human/threePoints instructions.
 function pageLoad() {
     expt.oppDishonesty = sample(expt.oppDishonesty); //expectations about opponent dishonesty
+    expt.lambdaAI = sample(expt.lambdaAI); //actual opponent dishonesty
+
     if(expt.oppDishonesty == "honest"){
-        expt.lambdaAI = 0.3;
+        $('#oppDishonesty').html("honestly");
     } else if(expt.oppDishonesty == "dishonest_small"){
-        expt.lambdaAI = 8.1;
+        $('#oppDishonesty').html("a bit dishonestly");
     } else{
-        expt.lambdaAI = 21.9;
+        $('#oppDishonesty').html("very dishonestly");
     }
 
     clicksMap[startPage]();
@@ -36,14 +38,6 @@ function clickPrePractice(){
 }
 
 function clickPostPractice(){
-    if(expt.oppDishonesty == "honest"){
-        $('#oppDishonesty').html("honestly");
-    } else if(expt.oppDishonesty == "dishonest_small"){
-        $('#oppDishonesty').html("a bit dishonestly");
-    } else{
-        $('#oppDishonesty').html("very dishonestly");
-    }
-    
     $('#postPractice').css('display','none');
 
     expt.catchTrials = distributeChecks(expt.trials, 0.1); // 0.1 of expt trials have an attention check

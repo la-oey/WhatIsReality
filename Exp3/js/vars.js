@@ -7,7 +7,7 @@ var expt = {
     probRed: 0.5,
     practiceLambdaAI: 5,
     lambdaAI: [0.3,8.1,21.9],
-    sd: 8.1
+    sd: 8.1,
     roles: ['sender','receiver'],
     cost: 'unif',
     costF: uniformCost,
