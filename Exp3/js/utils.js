@@ -213,7 +213,7 @@ function computerDraw(){
 
 function computerInfer(){
     let lambdaAI = trial.exptPart == 'practice' ? expt.practiceLambdaAI : expt.lambdaAI;
-    trial.marbles.inferred.red = Math.max(trial.marbles.reported.red - rpoisson(lambdaAI, expt.sd), 0);
+    trial.marbles.inferred.red = Math.max(trial.marbles.reported.red - rgaussian(lambdaAI, expt.sd), 0);
     trial.marbles.inferred.blue = expt.marblesSampled - trial.marbles.inferred.red;
 }
 
