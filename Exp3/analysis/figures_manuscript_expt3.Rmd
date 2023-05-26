@@ -1,0 +1,58 @@
+---
+title: "manuscript expt 3"
+author: "Lauren Oey"
+date: "2023-05-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+
+practice.s <- read_csv("sender_practice.csv")
+practice.r <- read_csv("receiver_practice.csv")
+receiver <- read_csv("receiver.csv")
+```
+
+```{r}
+receiver %>%
+  distinct(goal, cost)
+
+receiver %>%
+  distinct(subjID, trialLambda, instructedLambda) %>%
+  count(trialLambda, instructedLambda)
+```
+
+```{r}
+r.data <- receiver %>%
+  mutate(kest.bias = kest - ksay)
+
+r.summ <- r.data %>%
+  group_by(instructedLambda, trialLambda) %>%
+  summarise(mean.bias = mean(kest.bias),
+            sd.bias = sd(kest.bias))
+
+r.data %>%
+  ggplot(aes(x=kest.bias, y=..density.., fill=instructedLambda)) +
+  geom_vline(xintercept=0) +
+  geom_histogram(colour="black") +
+  scale_x_continuous(limits=c(-100, 100)) +
+  scale_y_continuous(limits=c(0, 0.09), expand=c(0,0)) +
+  facet_grid(instructedLambda ~ trialLambda) +
+  theme_bw()
+```
+
+```{r}
+r.data %>%
+  mutate(ksay.bias = ksay - k) %>%
+  ggplot(aes(x=ksay.bias, y=..count.., fill=instructedLambda)) +
+  geom_vline(xintercept=0) +
+  geom_histogram(colour="black") +
+  scale_x_continuous(limits=c(-100, 100)) +
+  #scale_y_continuous(limits=c(0, 2100), expand=c(0,0)) +
+  facet_grid(instructedLambda ~ trialLambda) +
+  theme_bw()
+```
+
+

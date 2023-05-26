@@ -1,4 +1,4 @@
-setwd("/Users/loey/Desktop/Research/FakeNews/WhatIsReality/Exp1/analysis/")
+setwd("/Users/loey/Desktop/Research/FakeNews/WhatIsReality/Exp1_2/analysis/")
 
 library(tidyverse)
 raw <- read_csv("raw.csv")
@@ -17,20 +17,12 @@ catch <- raw %>%
 count(catch, subjID) %>% 
   arrange(n)
 
-raw %>% #remove subj sona-32119 for data error
-  filter(subjID == "sona-32119") %>% 
-  nrow()
-
 catchdf <- catch %>%
   group_by(subjID) %>%
   summarise(accuracy = sum(abs(catchResponse-catchKey) <= 5) / n())
   
 catchdf %>%
   count(accuracy < .75)
-
-catchdf %>%
-  filter(accuracy < .75)
-
   
 
 trials <- raw %>%
@@ -63,10 +55,13 @@ trials <- trials %>%
   filter(accuracy >= 0.75,
          !subjID %in% r.error,
          !subjID %in% s.error,
-         # subjID != "sona-28750", #guessed the same numbers
-         ksay > 0, ksay < 100,
-         kest > 0, kest < 100)
+         ksay >= 0, ksay <= 100,
+         kest >= 0, kest <= 100)
 length(unique(trials$subjID))
+
+trials %>%
+  distinct(subjID, cost, goal) %>%
+  count(cost, goal)
 
 sender <- filter(trials, roleCurrent=="sender")
 write_csv(sender, "sender.csv")

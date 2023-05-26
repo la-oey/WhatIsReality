@@ -208,6 +208,8 @@ function trialDone() {
         }
 
         $('#finalScoreboardDiv').css('opacity',1);
+        data = {client: client, expt: expt, trials: trialData};
+        writeServer(data);
 
         $('#winner').css('display','block');
     } else {
@@ -240,7 +242,5 @@ function clickQs() {
 }
 
 function experimentDone() {
-    data = {client: client, expt: expt, trials: trialData};
-    writeServer(data);
     submitExternal(client);
 }

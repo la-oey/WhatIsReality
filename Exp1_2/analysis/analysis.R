@@ -1,4 +1,4 @@
-setwd("/Users/loey/Desktop/Research/FakeNews/WhatIsReality/Exp1/analysis/")
+setwd("/Users/loey/Desktop/Research/FakeNews/WhatIsReality/Exp1_2/analysis/")
 
 library(tidyverse)
 library(lme4)

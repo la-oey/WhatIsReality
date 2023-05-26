@@ -1,0 +1,387 @@
+---
+title: "General Sender ABM"
+author: "Lauren Oey"
+date: "6/17/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(cowplot)
+library(extraDistr)
+library(colorspace)
+```
+
+## Variables
+
+```{r}
+alph = 40
+ns = seq(0,1,0.02)
+n = length(ns)
+alph.bet = 3
+```
+
+## General Functions
+
+k, ksay, kest are all scaled between 0 and 1
+
+```{r}
+logitToProb <- function(logit){
+  exp(logit) / (1+exp(logit))
+}
+
+probToLogit <- function(prob){
+  log(prob / (1 - prob))
+}
+
+softmax <- function(alph, allEV) { ## allEV = vector of numerics
+  aev = exp(alph * allEV)
+  return(aev/sum(aev))
+}
+```
+
+### Figure Generator
+```{r}
+fig <- function(mat, labx="", laby="", title="") {
+  mat %>%
+    as_tibble() %>%
+    mutate(ky = ns) %>%
+    pivot_longer(-ky, names_to = 'kx', values_to='probability') %>%
+    mutate(kx = (as.numeric(substr(kx, 2, (n-1)))-1) / (n-1)) %>%
+    ggplot(aes(x=kx, y=ky, fill=probability)) +
+    geom_tile(size=0.5) +
+    ggtitle(title) +
+    scale_x_continuous(labx, expand=c(0,0)) +
+    scale_y_continuous(laby, expand=c(0,0)) +
+    # scale_fill_gradient(low="white", high="blue")
+    scale_fill_gradient2(low="white", mid="turquoise4", high="midnightblue", midpoint=0.5,
+                       limits=c(0,1), labels=c("0%","25%","50%","75%","100%"))
+}
+```
+
+### Priors
+```{r}
+p.k <- function(prior = "u"){
+  if(prior == "u") {
+    matrix(rep(1/n, each=n*n), nrow=n)
+  } else if(prior == "b") {
+    matrix(rep(dbinom(ns*10,n-1,0.5), each=n), nrow=n)
+  } else if(prior == "bb") {
+    matrix(rep(dbbinom(round(ns*10), n-1, alph.bet, alph.bet), each=n), nrow=n)
+  }
+}
+```
+
+### Utility
+```{r}
+# sender's utility
+u.S <- function(ksay, k, kest,
+  bias.rw, error.rw,
+  bias.mw, error.mw,
+  bias.rm, error.rm){
+  rw = kest - k
+  mw = ksay - k
+  rm = kest - ksay
+  bias.rw * rw - error.rw * rw^2 + bias.mw * mw - error.mw * mw^2 + bias.rm * rm - error.rm * rm^2
+}
+
+
+# round(
+#   array(
+#     u.S(rep(seq(0,1,0.1), 11*11), rep(rep(seq(0,1,0.1),each=11), 11), rep(seq(0,1,0.1),each=11*11), 1, 1), 
+#     dim=c(n,n,n)),
+#   2) #x(rows) = ksay, y(cols) = k, z(lists) = kest
+
+# receiver's utility
+u.R <- function(k, kest){
+  -(kest - k)^2
+}
+
+# t(matrix(u.R(rep(seq(0,1,0.1), 11), rep(seq(0,1,0.1),each=11)), nrow=11))
+```
+
+
+
+
+
+```{r}
+## Receiver0 P(kest|ksay)
+r.0 <- function() {
+  diag(n)
+}
+
+## Sender P(ksay|k)
+sender = function(bias.rw, error.rw,
+                  bias.mw, error.mw,
+                  bias.rm, error.rm,
+                  p.R.kest_ksay){ #x(rows) = ksay, y(cols) = k, z(list) = kest
+  arr.pR <- aperm(array(rep(p.R.kest_ksay, each=n), dim=c(n,n,n)), c(3,1,2))
+  arr.uS <- array(
+    u.S(ns,
+        rep(rep(ns, each=n), n),
+        rep(ns, each=n*n),
+        bias.rw, error.rw, bias.mw, error.mw, bias.rm, error.rm),
+    dim=c(n,n,n))
+  EV = apply(arr.uS * arr.pR, MARGIN=c(1,2), FUN=sum)
+  apply(EV, MARGIN=2, softmax, alph) # listsums -> 2D arr, x(rows) = ksay, y(cols) = k
+}
+
+## Receiver P(kest|ksay)
+receiver = function(p.S.ksay_k){ #x(rows) = ksay, y(cols) = k, z(list) = kest
+  p.S.k_ksay <- p.S.ksay_k / rowSums(p.S.ksay_k) # p(k | ksay)
+  arr.pS <- array(rep(p.S.k_ksay, n), dim=c(n,n,n))
+  arr.uR <- array(rep(mapply(function(i) u.R(i, ns), ns), each=n), dim=c(n,n,n))
+  EV.R = t(apply(arr.uR * arr.pS, MARGIN=c(1,3), FUN=sum))
+  apply(EV.R, MARGIN=2, softmax, alph) # rowsums -> 2D arr, x(rows) = kest, y(cols) = ksay
+}
+```
+
+kest | k
+
+```{r}
+## Receiver inference about truth P(kest|k)
+receiver.k = function(p.S.ksay_k){ #x(rows) = ksay, y(cols) = k, z(list) = kest
+  p.S.k_ksay <- p.S.ksay_k / rowSums(p.S.ksay_k) # p(k | ksay)
+  arr.pS <- array(rep(p.S.k_ksay, n), dim=c(n,n,n))
+  arr.uR <- array(rep(mapply(function(i) u.R(i, ns), ns), each=n), dim=c(n,n,n))
+  EV.R = t(apply(arr.uR * arr.pS, MARGIN=c(2,3), FUN=sum)) # marginalizes over ksay
+  apply(EV.R, MARGIN=2, softmax, alph) # rowsums -> 2D arr, x(rows) = kest, y(cols) = k
+}
+```
+
+
+```{r}
+ns1 = seq(0,0.4,0.1) #sums to 1
+n1 = length(ns1)
+# receiver's behavior
+# x(rows) = kest
+# y(cols) = ksay
+# validation: cols sum to 1
+(test.r.0 = array(rep(ns1, n1), dim=c(n1,n1)))
+# ------------->
+# x(rows) = ksay
+# y(cols) = k
+# z(list) = kest
+# validation: test.r.0 should be repeated across cols
+(test.arr.pR = aperm(array(test.r.0, dim=c(n1,n1,n1)), c(3,1,2)))
+
+# sender's utility
+# x(rows) = ksay
+# y(cols) = k
+# z(list) = kest
+test.b.rw = 1
+test.e.rw = 0
+test.b.mw = 0
+test.e.mw = 1
+test.b.rm = 0
+test.e.rm = 0
+# validation: cooperative sender (0,1,0,0,0,0): cols == list ? value = 0
+# validation: deceptive sender (1,0,0,1,0,0)
+(test.arr.uS <- array(
+    u.S(ns1, 
+        rep(rep(ns1, each=n1), n1), 
+        rep(ns1, each=n1*n1),
+        test.b.rw, test.e.rw, test.b.mw, test.e.mw, test.b.rm, test.e.rm), 
+    dim=c(n1,n1,n1)))
+# sums lists (kest)
+(test.EV = apply(test.arr.uS * test.arr.pR, MARGIN=c(1,2), FUN=sum))
+# apply softmax on columns
+(test.p.S.ksay_k <- apply(test.EV, MARGIN=2, softmax, alph))
+
+#validation: cols sum to 1
+colSums(test.p.S.ksay_k)
+```
+
+Verifying receiver function
+
+```{r}
+# sender's behavior
+# x(rows) = ksay
+# y(cols) = k
+# validation: cols sum to 1
+test.p.S.ksay_k
+
+# p(k | ksay)
+(test.p.S.k_ksay <- test.p.S.ksay_k / rowSums(test.p.S.ksay_k)) 
+
+# ------------->
+# x(rows) = ksay
+# y(cols) = k
+# z(list) = kest
+# validation: test.p.S.k_ksay should be repeated across lists
+(test.arr.pS <- array(rep(test.p.S.k_ksay, n1), dim=c(n1,n1,n1)))
+# receiver always wants accuracy
+(test.arr.uR <- array(rep(mapply(function(i) u.R(i, ns1), ns1), each=n1), dim=c(n1,n1,n1)))
+
+# sums columns (k)
+# then transposes
+(test.EV.R = t(apply(test.arr.uR * test.arr.pS, MARGIN=c(1,3), FUN=sum)))
+# apply softmax on columns
+(test.p.R.kest_ksay = apply(test.EV.R, MARGIN=2, softmax, alph))
+
+#validation: cols sum to 1
+colSums(test.p.R.kest_ksay)
+```
+
+# 1. Do deceptive senders and receivers reach an equilibrium? Or do they continue ratcheting to more extreme messages?
+
+```{r warning=FALSE}
+p.r0 = r.0()
+cost.mult = 1
+p.s1.defec.ksay_k = sender(1, 0, 0, cost.mult, p.r0)
+p.r1.kest_ksay = receiver(p.s1.defec.ksay_k)
+p.s2.defec.ksay_k = sender(1, 0, 0, cost.mult, p.r1.kest_ksay)
+p.r2.kest_ksay = receiver(p.s2.defec.ksay_k)
+p.s3.defec.ksay_k = sender(1, 0, 0, cost.mult, p.r2.kest_ksay)
+p.r3.kest_ksay = receiver(p.s3.defec.ksay_k)
+p.s4.defec.ksay_k = sender(1, 0, 0, cost.mult, p.r3.kest_ksay)
+p.r4.kest_ksay = receiver(p.s4.defec.ksay_k)
+p.s5.defec.ksay_k = sender(1, 0, 0, cost.mult, p.r4.kest_ksay)
+p.r5.kest_ksay = receiver(p.s5.defec.ksay_k)
+p.s6.defec.ksay_k = sender(1, 0, 0, cost.mult, p.r5.kest_ksay)
+
+
+blank <- ggplot() + theme_minimal()
+fig.r0 <- fig(p.r0, "ksay", "kest", "Receiver L0") 
+legend <- get_legend(fig.r0)
+fig.s1 <- fig(p.s1.defec.ksay_k, "k", "ksay", "Sender L1 Deceptive") + theme(legend.position="none")
+fig.r1 <- fig(p.r1.kest_ksay, "ksay", "kest", "Receiver L1") + theme(legend.position="none")
+fig.s2 <- fig(p.s2.defec.ksay_k, "k", "ksay", "Sender L2 Deceptive") + theme(legend.position="none")
+fig.r2 <- fig(p.r2.kest_ksay, "ksay", "kest", "Receiver L2") + theme(legend.position="none")
+fig.s3 <- fig(p.s3.defec.ksay_k, "k", "ksay", "Sender L3 Deceptive") + theme(legend.position="none")
+fig.r3 <- fig(p.r3.kest_ksay, "ksay", "kest", "Receiver L3") + theme(legend.position="none")
+fig.s4 <- fig(p.s4.defec.ksay_k, "k", "ksay", "Sender L4 Deceptive") + theme(legend.position="none")
+fig.r4 <- fig(p.r4.kest_ksay, "ksay", "kest", "Receiver L4") + theme(legend.position="none")
+fig.s5 <- fig(p.s5.defec.ksay_k, "k", "ksay", "Sender L5 Deceptive") + theme(legend.position="none")
+fig.r5 <- fig(p.r5.kest_ksay, "ksay", "kest", "Receiver L5") + theme(legend.position="none")
+fig.s6 <- fig(p.s6.defec.ksay_k, "k", "ksay", "Sender L6 Deceptive") + theme(legend.position="none")
+plot_grid(blank,fig.r0 + theme(legend.position="none"), 
+          fig.s1, fig.r1, fig.s2, fig.r2, fig.s3, fig.r3, fig.s4, fig.r4, fig.s5, fig.r5, fig.s6, legend,
+          nrow=2, byrow = FALSE)
+ggsave("img/model.full_defec.png", width=13, height=4)
+```
+
+Receiver kest | k
+
+```{r}
+p.r0 = r.0()
+cost.mult = 1
+p.s1.defec.ksay_k = sender(1, 0, 0, cost.mult, 0, 0, p.r0)
+p.r1.kest_ksay = receiver(p.s1.defec.ksay_k)
+p.r1.kest_k = receiver.k(p.s1.defec.ksay_k)
+p.s2.defec.ksay_k = sender(1, 0, 0, cost.mult, 0, 0, p.r1.kest_ksay)
+p.r2.kest_ksay = receiver(p.s2.defec.ksay_k)
+p.r2.kest_k = receiver.k(p.s2.defec.ksay_k)
+p.s3.defec.ksay_k = sender(1, 0, 0, cost.mult, 0, 0, p.r2.kest_ksay)
+
+blank <- ggplot() + theme_minimal()
+fig.r0 <- fig(p.r0, "ksay", "kest", "Receiver L0") 
+legend <- get_legend(fig.r0)
+fig.s1 <- fig(p.s1.defec.ksay_k, "k", "ksay", "Sender L1 Deceptive") + theme(legend.position="none")
+fig.r1 <- fig(p.r1.kest_k, "k", "kest", "Receiver L1") + theme(legend.position="none")
+fig.s2 <- fig(p.s2.defec.ksay_k, "k", "ksay", "Sender L2 Deceptive") + theme(legend.position="none")
+fig.r2 <- fig(p.r2.kest_k, "k", "kest", "Receiver L2") + theme(legend.position="none")
+fig.s3 <- fig(p.s3.defec.ksay_k, "k", "ksay", "Sender L3 Deceptive") + theme(legend.position="none")
+
+plot_grid(blank,fig.r0 + theme(legend.position="none"), 
+          fig.s1, fig.r1, fig.s2, fig.r2, fig.s3, legend,
+          nrow=2, byrow = FALSE)
+```
+
+
+Behavior converges to equilibrium, so not using Poisson weighting...
+Examine behavior of L2 sender
+
+Examine behavior of L1 receiver
+
+
+
+Verifying sender function
+
+## Ratio of params (bias acc vs message cost) and variance kest | k
+
+
+
+
+
+
+
+
+
+# 2. Do cooperative senders inflate their lies when they suspect the receiver to de-bias messages?
+When population is 100% deceptive?
+
+```{r warning=FALSE}
+p.defec = 1
+p.r0 = r.0()
+p.s1.defec.ksay_k = sender(1, 0, 0, 1, 0, 0, p.r0)
+p.s1.coop.ksay_k = sender(0, 1, 0, 0, 0, 0, p.r0)
+p.s1.comb.ksay_k = p.defec*p.s1.defec.ksay_k + (1-p.defec)*p.s1.coop.ksay_k
+p.r1.kest_ksay = receiver(p.s1.comb.ksay_k)
+p.s2.coop.ksay_k = sender(0, 1, 0, 0, 0, 0, p.r1.kest_ksay)
+
+
+blank <- ggplot() + theme_minimal()
+fig.r0 <- fig(p.r0, "ksay", "kest", "Receiver L0") 
+legend <- get_legend(fig.r0)
+fig.s1 <- fig(p.s1.comb.ksay_k, "k", "ksay", "Sender L1 Combined") + theme(legend.position="none")
+fig.r1 <- fig(p.r1.kest_ksay, "ksay", "kest", "Receiver L1") + theme(legend.position="none")
+fig.s2 <- fig(p.s2.coop.ksay_k, "k", "ksay", "Sender L2 Cooperative") + theme(legend.position="none")
+plot_grid(blank,fig.r0 + theme(legend.position="none"), 
+          fig.s1, fig.r1, fig.s2, legend,
+          nrow=2, byrow = FALSE)
+ggsave("img/model.full_coop_defec100.png", width=8, height=5.5)
+```
+
+When population is 50% deceptive, 50% cooperative?
+
+```{r warning=FALSE}
+p.defec = 0.5
+p.r0 = r.0()
+p.s1.defec.ksay_k = sender(1, 0, 0, 1, 0, 0, p.r0)
+p.s1.coop.ksay_k = sender(0, 1, 0, 0, 0, 0, p.r0)
+p.s1.comb.ksay_k = p.defec*p.s1.defec.ksay_k + (1-p.defec)*p.s1.coop.ksay_k
+p.r1.kest_ksay = receiver(p.s1.comb.ksay_k)
+p.s2.coop.ksay_k = sender(0, 1, 0, 0, 0, 0, p.r1.kest_ksay)
+
+
+blank <- ggplot() + theme_minimal()
+fig.r0 <- fig(p.r0, "ksay", "kest", "Receiver L0") 
+legend <- get_legend(fig.r0)
+fig.s1 <- fig(p.s1.comb.ksay_k, "k", "ksay", "Sender L1 Combined") + theme(legend.position="none")
+fig.r1 <- fig(p.r1.kest_ksay, "ksay", "kest", "Receiver L1") + theme(legend.position="none")
+fig.s2 <- fig(p.s2.coop.ksay_k, "k", "ksay", "Sender L2 Cooperative") + theme(legend.position="none")
+plot_grid(blank,fig.r0 + theme(legend.position="none"), 
+          fig.s1, fig.r1, fig.s2, legend,
+          nrow=2, byrow = FALSE)
+ggsave("img/model.full_coop_defec50.png", width=8, height=5.5)
+```
+
+```{r}
+for(p.def in c(0, 0.5, 1)){
+  p.defec = p.def
+  
+  p.r0 = r.0()
+  p.s1.defec.ksay_k = sender(1, 0, 0, 1, 0, 0, p.r0)
+  p.s1.coop.ksay_k = sender(0, 1, 0, 0, 0, 0, p.r0)
+  p.s1.comb.ksay_k = p.defec*p.s1.defec.ksay_k + (1-p.defec)*p.s1.coop.ksay_k
+  p.r1.kest_ksay = receiver(p.s1.comb.ksay_k)
+  p.s2.coop.ksay_k = sender(0, 1, 0, 0, 0, 0, p.r1.kest_ksay)
+  
+  blank <- ggplot() + theme_minimal()
+  fig.r0 <- fig(p.r0, "ksay", "kest", "Receiver L0") 
+  legend <- get_legend(fig.r0)
+  fig.s1 <- fig(p.s1.comb.ksay_k, "k", "ksay", paste0("Sender L1 ",(1-p.def)*100,"% Cooperative")) + theme(legend.position="none")
+  fig.r1 <- fig(p.r1.kest_ksay, "ksay", "kest", "Receiver L1") + theme(legend.position="none")
+  fig.s2 <- fig(p.s2.coop.ksay_k, "k", "ksay", "Sender L2 Cooperative") + theme(legend.position="none")
+  plot_grid(blank,fig.r0 + theme(legend.position="none"), 
+            fig.s1, fig.r1, fig.s2, legend,
+            nrow=2, byrow = FALSE)
+  ggsave(paste0("img/model.full_p", p.def*100, "_",
+                "rwbmwe_vs_rwe__rwe", 
+                ".png"), 
+         width=9.5, height=6)
+}
+```

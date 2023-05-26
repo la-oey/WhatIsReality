@@ -35,7 +35,7 @@ ggplot(sr.2, aes(x=mean.ksay, y=mean.kest, colour=cond)) +
         axis.title.y = element_markdown())
 
 
-# cluster
+# individuals
 sender %>%
   filter(cost == "linear") %>%
   ggplot(aes(x=k, y=ksay, colour=goal)) +
@@ -48,8 +48,11 @@ sender %>%
   theme_bw() +
   theme(legend.position = "bottom")
 
-library(stats4)
 
+
+# fit Poisson model to senders
+## fit matrix
+library(stats4)
 
 eval.s <- function(matr, ns){ #ns = 8 x 6 matrix of counts for all conditions
   sum(log(matr)*ns)
@@ -75,42 +78,68 @@ poisson.mixture <- function(util, lambda, weight){
     kx
   )
 }
+poisson.mixture <- function(util, lambda, lambda2, weight){
+  weight = logitToProb(pmin(10, pmax(-10, weight)))
+  lambda = exp(lambda)
+  mapply(
+    function(k){
+      kstar = kx
+      weight*dpois((kstar-k)*util, lambda)/ppois(ifelse(util==1, 100-k, k), lambda)+
+        (1-weight)*dpois((k-kstar)*util, lambda2)/ppois(ifelse(util==1, k, 100-k), lambda2)
+    },
+    kx
+  )
+}
 
-poisson.mixture(-1, log(10), probToLogit(0.2))
-poisson.pred(log(10), probToLogit(0.2))
-
-poisson.pred <- function(lambda, weight){
+poisson.pred <- function(lambda, lambda2, weight){
   matrix(
     mapply(
-      function(u) poisson.mixture(u, lambda, weight), #repeat for each base rate condition
+      function(u) poisson.mixture(u, lambda, lambda2, weight), #repeat for each base rate condition
       c(1, -1)), #repeat for each utility structure condition
     nrow=length(kx)^2)
 }
 
-sender.matr <- sender %>%
+sender.vals <- sender %>%
   filter(cost == "linear") %>%
   count(goal, k, ksay) %>%
-  complete(goal=c("overestimate","underestimate"), k=0:100, ksay=0:100, fill = list(n = 0)) %>%
+  complete(goal=c("overestimate","underestimate"), k=0:100, ksay=0:100, fill = list(n = 0))
+sender.matr <- sender.vals %>%
   pull(n) %>%
   matrix(nrow=length(kx)^2)
 
+# validation using computer which we know should have lambda = 5
+comp.sender.vals <- receiver %>%
+  filter(cost == "linear") %>%
+  count(goal, k, ksay) %>%
+  complete(goal=c("overestimate","underestimate"), k=0:100, ksay=0:100, fill = list(n = 0)) 
+comp.sender.matr <- comp.sender.vals %>%
+  pull(n) %>%
+  matrix(nrow=length(kx)^2)
 
-sender.LL <- function(lambda, weight){
+sender.LL <- function(lambda, lambda2, weight){
   human <- sender.matr
   -eval.s(
-    poisson.pred(lambda, weight),
+    poisson.pred(lambda, lambda2, weight),
     human
   )
 }
 
-
-sender.fit <- summary(mle(sender.LL,
-                          start=list(lambda=rnorm(1, 0, 1),
-                                     weight=rnorm(1, 0, 1)),
-                          method = "BFGS"))
+for(i in 1:40){
+  tryCatch({sender.fit <- summary(mle(sender.LL, 
+                                     start=list(lambda=rnorm(1, 0, 1),
+                                                lambda2=rnorm(1, 0, 1),
+                                                weight=rnorm(1, 0, 1)),
+                                     method = "BFGS"))
+  break
+  }, error = function(e){
+    # message(e)
+  })
+}
 sender.coef = coef(sender.fit)
-exp(sender.coef["lambda", "Estimate"])
-poisson.pred(sender.coef["lambda", "Estimate"], sender.coef["weight", "Estimate"]) %>%
+# comp.sender.coef = coef(sender.fit)
+poisson.pred(sender.coef["lambda", "Estimate"], 
+             sender.coef["lambda2", "Estimate"], 
+             sender.coef["weight", "Estimate"]) %>%
   # poisson.pred(log(10), probToLogit(0.2)) %>%
   as.data.frame() %>%
   rename(overest = V1,
@@ -125,15 +154,30 @@ poisson.pred(sender.coef["lambda", "Estimate"], sender.coef["weight", "Estimate"
   scale_fill_gradient(low="white",high="purple") +
   facet_wrap(~goal)
 
-
-
-sender %>%
-  filter(cost == "linear") %>%
-  count(goal, k, ksay) %>%
-  complete(goal=c("overestimate","underestimate"), k=0:100, ksay=0:100, fill = list(n = 0)) %>%
+sender.vals %>%
   ggplot(aes(x=k, y=ksay, fill=n)) +
   geom_tile() +
+  geom_abline(slope=1) +
   scale_x_continuous(expand=c(0,0)) +
   scale_y_continuous(expand=c(0,0)) +
   scale_fill_gradient(low="white",high="purple") +
   facet_wrap(~goal)
+
+comp.sender.vals %>%
+  ggplot(aes(x=k, y=ksay, fill=n)) +
+  geom_tile() +
+  geom_abline(slope=1) +
+  scale_x_continuous(expand=c(0,0)) +
+  scale_y_continuous(expand=c(0,0)) +
+  scale_fill_gradient(low="white",high="purple") +
+  facet_wrap(~goal)
+
+## fit vector
+sender %>%
+  filter(cost == "linear") %>%
+  mutate(bias = ksay - k,
+         bias = ifelse(goal=="underestimate", -bias, bias)) %>%
+  ggplot(aes(x=bias)) +
+  geom_histogram()
+
+

@@ -63,8 +63,8 @@ var trial = {
     numClicks: 0,
     flipThresh: 1,
     prevMarble: -1
-
 };
+
 var client = parseClient();
 var trialData = []; // store of all trials
 var startPage = "consent";
