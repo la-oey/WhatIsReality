@@ -10,3 +10,6 @@ Exp1_2 / marble-flip-2 - Error fixed; time is also stated to be a server issue, 
 Expt 2 - Lambda AI agent conditions (or how much the opponent is willing to lie and guess down by) = {0.3, 8.1, 21.9}; practice lambda is always 5
 - feedback is given every 10 trials, instead of 5
 - participants only play as receivers
+- accidentally did not instruct participants about what type of lambda agent they were playing
+
+Expt 3 - Expt 2 but with one line of instructions about the lambda agent
