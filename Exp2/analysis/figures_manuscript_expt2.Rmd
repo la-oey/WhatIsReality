@@ -31,14 +31,14 @@ r.data <- receiver %>%
   mutate(kest.bias = kest - ksay)
 
 r.summ <- r.data %>%
-  group_by(instructedLambda, trialLambda) %>%
+  group_by(trialLambda) %>% #instructedLambda was not told
   summarise(mean.bias = mean(kest.bias),
             sd.bias = sd(kest.bias),
             mean.bias.txt = paste("x ==", round(mean.bias, 2)),
             sd.bias.txt = paste("sd ==", round(sd.bias, 2)))
 
 r.data %>%
-  ggplot(aes(x=kest.bias, y=..density.., fill=instructedLambda)) +
+  ggplot(aes(x=kest.bias, y=..density.., fill=as.factor(trialLambda))) +
   geom_vline(xintercept=0) +
   geom_histogram(colour="black") +
   geom_text(data=r.summ, 
@@ -49,7 +49,7 @@ r.data %>%
             family=fontfam, size=3.5) +
   scale_x_continuous(limits=c(-100, 100)) +
   scale_y_continuous(limits=c(0, 0.09), expand=c(0,0)) +
-  facet_grid(instructedLambda ~ trialLambda) +
+  facet_wrap(~trialLambda) +
   theme_bw()
 ```
 
@@ -59,15 +59,15 @@ r.data %>%
   geom_density(alpha=0.5, size=0.05) +
   scale_y_continuous(limits=c(0,1)) +
   guides(colour=FALSE) +
-  facet_grid(instructedLambda ~ trialLambda) +
+  facet_wrap(~trialLambda) +
   theme_bw()
 
 r.data %>%
-  group_by(subjID, instructedLambda, trialLambda) %>%
+  group_by(subjID, trialLambda) %>%
   summarise(mean = mean(kest.bias)) %>%
   ggplot(aes(x=mean, y=..density..)) +
   geom_histogram() +
-  facet_grid(instructedLambda ~ trialLambda) +
+  facet_wrap(~trialLambda) +
   theme_bw()
 ```
 
@@ -80,12 +80,12 @@ r.data %>%
 
 r.data %>%
   mutate(ksay.bias = ksay - k) %>%
-  ggplot(aes(x=ksay.bias, y=..count.., fill=instructedLambda)) +
+  ggplot(aes(x=ksay.bias, y=..count.., fill=as.factor(trialLambda))) +
   geom_vline(xintercept=0) +
   geom_histogram(colour="black") +
   scale_x_continuous(limits=c(-100, 100)) +
   #scale_y_continuous(limits=c(0, 2100), expand=c(0,0)) +
-  facet_grid(instructedLambda ~ trialLambda) +
+  facet_wrap(~trialLambda) +
   theme_bw()
 ```
 
