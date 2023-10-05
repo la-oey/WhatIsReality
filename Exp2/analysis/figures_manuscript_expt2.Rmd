@@ -1,0 +1,114 @@
+---
+title: "manuscript expt 2"
+author: "Lauren Oey"
+date: "2023-04-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+
+practice.s <- read_csv("sender_practice.csv")
+practice.r <- read_csv("receiver_practice.csv")
+receiver <- read_csv("receiver.csv")
+```
+
+```{r}
+receiver %>%
+  distinct(goal, cost)
+
+receiver %>%
+  distinct(subjID, trialLambda, instructedLambda) %>%
+  count(trialLambda, instructedLambda)
+```
+
+```{r}
+library(ggtext)
+fontfam = "Optima"
+r.data <- receiver %>%
+  mutate(kest.bias = kest - ksay)
+
+r.summ <- r.data %>%
+  group_by(instructedLambda, trialLambda) %>%
+  summarise(mean.bias = mean(kest.bias),
+            sd.bias = sd(kest.bias),
+            mean.bias.txt = paste("x ==", round(mean.bias, 2)),
+            sd.bias.txt = paste("sd ==", round(sd.bias, 2)))
+
+r.data %>%
+  ggplot(aes(x=kest.bias, y=..density.., fill=instructedLambda)) +
+  geom_vline(xintercept=0) +
+  geom_histogram(colour="black") +
+  geom_text(data=r.summ, 
+            aes(x=60, y=.025, label=mean.bias.txt), parse=TRUE, 
+            family=fontfam, size=3.5) +
+  geom_text(data=r.summ, 
+            aes(x=60, y=.015, label=sd.bias.txt), parse=TRUE, 
+            family=fontfam, size=3.5) +
+  scale_x_continuous(limits=c(-100, 100)) +
+  scale_y_continuous(limits=c(0, 0.09), expand=c(0,0)) +
+  facet_grid(instructedLambda ~ trialLambda) +
+  theme_bw()
+```
+
+```{r}
+r.data %>%
+  ggplot(aes(x=kest.bias, colour=subjID)) +
+  geom_density(alpha=0.5, size=0.05) +
+  scale_y_continuous(limits=c(0,1)) +
+  guides(colour=FALSE) +
+  facet_grid(instructedLambda ~ trialLambda) +
+  theme_bw()
+
+r.data %>%
+  group_by(subjID, instructedLambda, trialLambda) %>%
+  summarise(mean = mean(kest.bias)) %>%
+  ggplot(aes(x=mean, y=..density..)) +
+  geom_histogram() +
+  facet_grid(instructedLambda ~ trialLambda) +
+  theme_bw()
+```
+
+```{r}
+r.data %>%
+  mutate(ksay.bias = ksay - k) %>%
+  group_by(trialLambda) %>%
+  summarise(mean = mean(ksay.bias),
+            sd = sd(ksay.bias))
+
+r.data %>%
+  mutate(ksay.bias = ksay - k) %>%
+  ggplot(aes(x=ksay.bias, y=..count.., fill=instructedLambda)) +
+  geom_vline(xintercept=0) +
+  geom_histogram(colour="black") +
+  scale_x_continuous(limits=c(-100, 100)) +
+  #scale_y_continuous(limits=c(0, 2100), expand=c(0,0)) +
+  facet_grid(instructedLambda ~ trialLambda) +
+  theme_bw()
+```
+
+```{r}
+library(VGAM)
+hist(rbetabinom.ab(1000, 100, 3, 3))
+hist(rbetabinom.ab(1000, 100, 3, 6))
+hist(rbetabinom.ab(1000, 100, 6, 3))
+hist(rbetabinom.ab(1000, 100, 2, 2))
+hist(rbetabinom.ab(1000, 100, 1, 1))
+hist(rbetabinom.ab(1000, 100, 6, 6))
+hist(rbetabinom.ab(1000, 100, 12, 12))
+hist(rbetabinom.ab(1000, 100, 24, 24))
+
+sd(rbetabinom.ab(1000, 100, 3, 3))
+sd(rbetabinom.ab(10000, 100, 3, 6))
+sd(rbetabinom.ab(10000, 100, 4, 5))
+sd(rbetabinom.ab(10000, 100, 5, 4))
+sd(rbetabinom.ab(10000, 100, 6, 3))
+
+hist(rpois(1000, 0.3))
+hist(rpois(1000, 8))
+hist(rpois(1000, 25))
+
+```
+
